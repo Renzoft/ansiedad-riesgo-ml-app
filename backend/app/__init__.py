@@ -9,7 +9,9 @@ from datetime import timedelta #Expiración de tokens
 from app.models.usuario import db,bcrypt #Modelo de usuario
 from app.routes.auth_routes import auth_bp #Rutas de autenticación
 from dotenv import load_dotenv #Manejo de variables de entorno
+from flask_migrate import Migrate
 
+migrate = Migrate() #Manejo de migraciones
 jwt = JWTManager() #Manejo de JWT(JSON Web Tokens)
 
 def crear_app():
@@ -36,13 +38,9 @@ def crear_app():
     db.init_app(app) #Inicialización de la base de datos
     bcrypt.init_app(app) #Inicialización de la encriptación de contraseñas
     jwt.init_app(app) #Inicialización de JWT(JSON Web Tokens)
-
+    migrate.init_app(app,db) #Inicialización de migraciones
     # ==========================================
     # CREACIÓN DE TABLAS
     # ==========================================
-
-    with app.app_context():
-        db.create_all()
-    
     app.register_blueprint(auth_bp)
     return app

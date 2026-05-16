@@ -5,6 +5,7 @@ Rutas de autenticación
 from flask import Blueprint, request, jsonify #Enrutamiento modular
 from flask_jwt_extended import create_access_token#Generación de tokens
 from app.models.usuario import db, Usuario #Modelo de usuario
+from app.utils.roles import ROLE_ESTUDIANTE #Roles
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -40,7 +41,7 @@ def registrar_usuario():
     # CREAR USUARIO
     # =========================
     nuevo_usuario = Usuario(
-        nombre=nombre, correo=correo, facultad=facultad, ciclo=ciclo
+        nombre=nombre, correo=correo, facultad=facultad, ciclo=ciclo,rol = ROLE_ESTUDIANTE
     )
 
     # HASH PASSWORD
@@ -86,6 +87,8 @@ def login():
     # ==========================================
     # GENERAR TOKEN JWT
     # ==========================================
-    token = create_access_token(identity=usuario.id_usuario)
+    token = create_access_token(
+        identity=usuario.id_usuario, additional_claims={"rol": usuario.rol}
+    )
 
     return jsonify({"mensaje": "Login exitoso", "token": token}), 200

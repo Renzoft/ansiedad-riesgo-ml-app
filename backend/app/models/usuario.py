@@ -18,6 +18,7 @@ class Usuario(db.Model):
 
     id_usuario = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
+    rol = db.Column(db.String(20), nullable=False)
     correo = db.Column(db.String(100), unique = True, nullable=False)
     contrasena = db.Column(db.String(255), nullable=False)
     facultad = db.Column(db.String(100))
