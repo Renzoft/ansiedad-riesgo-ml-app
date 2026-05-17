@@ -11,6 +11,9 @@ from app.routes.auth_routes import auth_bp #Rutas de autenticación
 from dotenv import load_dotenv #Manejo de variables de entorno
 from flask_migrate import Migrate
 
+from app.models.habito import Habito # Importar modelo para que SQLAlchemy/Migrate lo detecte
+from app.routes.habitos_routes import habitos_bp #Rutas de hábitos
+
 migrate = Migrate() #Manejo de migraciones
 jwt = JWTManager() #Manejo de JWT(JSON Web Tokens)
 
@@ -43,4 +46,13 @@ def crear_app():
     # CREACIÓN DE TABLAS
     # ==========================================
     app.register_blueprint(auth_bp)
+    app.register_blueprint(habitos_bp)
+
+    # Comando CLI para inicializar la base de datos manualmente
+    @app.cli.command("init-db")
+    def init_db():
+        """Inicializa la base de datos creando las tablas"""
+        db.create_all()
+        print("Tablas creadas correctamente.")
+
     return app

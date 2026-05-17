@@ -88,7 +88,7 @@ def login():
     # GENERAR TOKEN JWT
     # ==========================================
     token = create_access_token(
-        identity=usuario.id_usuario, additional_claims={"rol": usuario.rol}
+        identity=str(usuario.id_usuario), additional_claims={"rol": usuario.rol}
     )
 
     return jsonify({"mensaje": "Login exitoso", "token": token}), 200
