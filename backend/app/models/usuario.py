@@ -26,6 +26,19 @@ class Usuario(db.Model):
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
     # =========================
+    # VARIABLES ACADÉMICAS Y PSICOSOCIALES
+    # =========================
+    phq9 = db.Column(db.Integer, default=0)
+    gad7 = db.Column(db.Integer, default=0)
+    online_stress = db.Column(db.Integer, default=0)
+    financial_stress = db.Column(db.Integer, default=0)
+    academic_stress = db.Column(db.Integer, default=0)
+    gpa = db.Column(db.Float, default=0.0)
+    family_support = db.Column(db.Integer, default=0)
+    self_efficacy = db.Column(db.Integer, default=0)
+    peer_relationship = db.Column(db.Integer, default=0)
+
+    # =========================
     # MÉTODOS AUTH
     # =========================
     def establecer_contrasena(self, contrasena):

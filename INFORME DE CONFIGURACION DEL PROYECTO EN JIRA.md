@@ -87,14 +87,14 @@ Puntos totales: 16
 ### **HU-08 – Registrar perfil multidimensional**
 
 Descripción:    
-Como estudiante, quiero registrar mis datos académicos y personales (nombre, correo, edad, carrera, semestre) para generar mi perfil de evaluación.
+Como estudiante, quiero registrar mi perfil académico y psicosocial completo (incluyendo PHQ-9, GAD-7, niveles de estrés, GPA, apoyo familiar, autoeficacia y relaciones con compañeros) para que el modelo predictivo cuente con las 15 variables necesarias.
 
 Criterios de aceptación:  
 
-1. El formulario incluye campos: nombre completo, correo electrónico (único), contraseña, edad (16-70), carrera (lista desplegable), semestre (1-10).  
-2. Todos los campos son obligatorios y se validan (correo único, edad numérica).  
-3. La contraseña se almacena de forma segura (hash bcrypt).  
-4. Al enviar, se crea el perfil en la base de datos y se redirige a la pantalla de login.
+1. El formulario incluye campos para: datos personales (nombre, correo, edad), académicos (carrera, semestre, GPA) y escalas de salud mental (PHQ-9, GAD-7, online/financial/academic stress, family support, self-efficacy, peer relationship).  
+2. El sistema valida rangos (PHQ-9 0-27, GAD-7 0-21, escalas 1-10, GPA según escala universitaria) y la unicidad del correo.  
+3. Al enviar, se guarda el perfil en la tabla usuario con todas las variables; en caso de error se muestra un mensaje claro.  
+4. Tras un registro exitoso, el estudiante puede iniciar sesión.
 
 Subtareas técnicas (TR):  
 
@@ -148,14 +148,14 @@ Subtareas técnicas (TR):
 ### **HU-11 – Estimar riesgo de ansiedad**
 
 Descripción:    
-Como estudiante, quiero conocer mi nivel de riesgo emocional (bajo, medio, alto) basado en mis respuestas para comprender mi estado de ansiedad.
+Como estudiante, quiero conocer mi nivel de riesgo emocional basado en un modelo predictivo que utiliza las 15 variables del dataset (incluyendo PHQ-9, GAD-7, estrés académico, etc.) para comprender mi estado de ansiedad con mayor precisión.
 
 Criterios de aceptación:  
 
-1. El sistema procesa los datos del perfil \+ los últimos hábitos registrados usando un modelo de machine learning (o reglas lógicas).  
-2. Devuelve una categoría de riesgo y una breve explicación.  
-3. El resultado se muestra en pantalla y se guarda en el historial con fecha.  
-4. Si no hay hábitos suficientes, se muestra un mensaje pidiendo registrar al menos un día.
+1. El sistema combina los datos del perfil (9 variables psicoeducativas) con los últimos hábitos registrados (6 variables de estilo de vida) para formar un vector de 15 características.  
+2. Si no hay hábitos suficientes, se muestra mensaje de error.  
+3. El modelo (puede empezar con reglas lógicas o ML) devuelve probabilidad y categoría (bajo/medio/alto).  
+4. Se guarda el resultado en EvaluacionRiesgo.
 
 Subtareas técnicas (TR):  
 
