@@ -1,0 +1,109 @@
+"""
+Rutas para Evaluación y Riesgo Emocional
+"""
+from flask import Blueprint, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.models.usuario import db, Usuario
+from app.models.habito import Habito
+from app.models.evaluacion import EvaluacionRiesgo
+from app.services.ml_service import predictor
+
+evaluaciones_bp = Blueprint("evaluaciones", __name__, url_prefix="/api/v1")
+
+@evaluaciones_bp.route('/evaluaciones/evaluar', methods=['POST'])
+@jwt_required()
+def evaluar_riesgo():
+    """
+    Estima el riesgo de ansiedad del usuario actual (HU-11)
+    """
+    try:
+        # 1. Obtener usuario_id desde el token
+        usuario_id = int(get_jwt_identity())
+        
+        # 2. Consultar usuario
+        usuario = Usuario.query.get(usuario_id)
+        if not usuario:
+            return jsonify({"error": "No encontrado", "mensaje": "Usuario no encontrado"}), 404
+            
+        # 3. Consultar el último registro de hábito
+        ultimo_habito = Habito.query.filter_by(usuario_id=usuario_id).order_by(Habito.fecha.desc()).first()
+        
+        # 4. Validación Crítica
+        if not ultimo_habito:
+            return jsonify({
+                "error": "Datos insuficientes", 
+                "mensaje": "Debes registrar tus indicadores de estilo de vida de al menos un día para poder realizar la estimación de riesgo emocional."
+            }), 400
+
+        # 5. Construir el vector de 15 características en el ORDEN ESTRICTO:
+        # [phq9, gad7, sleep_hours, exercise_freq, social_activity, online_stress,
+        #  gpa, family_support, screen_time, academic_stress, diet_quality,
+        #  self_efficacy, peer_relationship, financial_stress, sleep_quality]
+        vector_caracteristicas = [
+            float(usuario.phq9),
+            float(usuario.gad7),
+            float(ultimo_habito.sleep_hours),
+            float(ultimo_habito.exercise_freq),
+            float(ultimo_habito.social_activity),
+            float(usuario.online_stress),
+            float(usuario.gpa),
+            float(usuario.family_support),
+            float(ultimo_habito.screen_time),
+            float(usuario.academic_stress),
+            float(ultimo_habito.diet_quality),
+            float(usuario.self_efficacy),
+            float(usuario.peer_relationship),
+            float(usuario.financial_stress),
+            float(ultimo_habito.sleep_quality)
+        ]
+
+        # 6. Invocar predecir
+        probabilidad = predictor.predecir(vector_caracteristicas)
+
+        # 7. Categorización (TR15)
+        if probabilidad < 0.35:
+            categoria = 'BAJO'
+            explicacion = "Tus indicadores muestran un equilibrio saludable. Continúa manteniendo estas rutinas."
+        elif 0.35 <= probabilidad <= 0.70:
+            categoria = 'MEDIO'
+            explicacion = "Se detectan ciertos niveles de alerta. Revisa tus horas de sueño y pausas activas."
+        else:
+            categoria = 'ALTO'
+            explicacion = "Alta predisposición a ansiedad. Busca orientación en el departamento de bienestar estudiantil."
+
+        # 8. Guardar en base de datos
+        nueva_evaluacion = EvaluacionRiesgo(
+            usuario_id=usuario_id,
+            probabilidad_ansiedad=probabilidad,
+            categoria_riesgo=categoria,
+            explicacion=explicacion
+        )
+        
+        db.session.add(nueva_evaluacion)
+        db.session.commit()
+        
+        return jsonify(nueva_evaluacion.to_dict()), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Error interno del servidor", "mensaje": str(e)}), 500
+
+
+@evaluaciones_bp.route('/evaluaciones/historial', methods=['GET'])
+@jwt_required()
+def historial_evaluaciones():
+    """
+    Retorna todas las evaluaciones del usuario autenticado (Parte de HU-11/HU-14)
+    """
+    try:
+        usuario_id = int(get_jwt_identity())
+        
+        # Consultar evaluaciones ordenadas por created_at descendente
+        evaluaciones = EvaluacionRiesgo.query.filter_by(usuario_id=usuario_id)\
+                                             .order_by(EvaluacionRiesgo.created_at.desc()).all()
+                                             
+        resultado = [evaluacion.to_dict() for evaluacion in evaluaciones]
+        return jsonify(resultado), 200
+        
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "mensaje": str(e)}), 500

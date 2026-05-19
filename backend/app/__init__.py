@@ -13,7 +13,8 @@ from flask_migrate import Migrate
 
 from app.models.habito import Habito # Importar modelo para que SQLAlchemy/Migrate lo detecte
 from app.routes.habitos_routes import habitos_bp #Rutas de hábitos
-
+from app.models.evaluacion import EvaluacionRiesgo # Modelo Evaluacion de Riesgo
+from app.routes.evaluaciones_routes import evaluaciones_bp # Rutas Evaluacion de Riesgo
 migrate = Migrate() #Manejo de migraciones
 jwt = JWTManager() #Manejo de JWT(JSON Web Tokens)
 
@@ -47,6 +48,7 @@ def crear_app():
     # ==========================================
     app.register_blueprint(auth_bp)
     app.register_blueprint(habitos_bp)
+    app.register_blueprint(evaluaciones_bp)
 
     # Comando CLI para inicializar la base de datos manualmente
     @app.cli.command("init-db")
