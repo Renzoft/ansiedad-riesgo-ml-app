@@ -24,6 +24,41 @@ La solución integra modelos de clasificación supervisada (Regresión Logístic
 
 ---
 
+## Guía de Configuración Local (Para Desarrolladores)
+
+Si acabas de clonar este repositorio y estás usando **Windows**, sigue estos pasos para levantar el backend en tu máquina local:
+
+1. **Entrar a la carpeta del backend:**
+   ```bash
+   cd backend
+   ```
+2. **Crear y activar tu entorno virtual:**
+   ```bash
+   python -m venv venv
+   source venv/Scripts/activate  # Si usas Git Bash
+   # .\venv\Scripts\activate      # Si usas CMD o PowerShell
+   ```
+3. **Instalar las dependencias:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. **Definir la variable de entorno de Flask (Git Bash):**
+   *(Este paso es opcional si ya tienes el archivo `.env`, pero recomendado)*
+   ```bash
+   export FLASK_APP=run.py
+   ```
+5. **Inicializar y actualizar la base de datos (SQLite local):**
+   ```bash
+   flask db upgrade
+   ```
+6. **Levantar el servidor:**
+   ```bash
+   flask run
+   ```
+   *El servidor quedará corriendo en `http://127.0.0.1:5000`.*
+
+---
+
 ## Stack tecnológico
 
 - **Frontend móvil:** Flutter
