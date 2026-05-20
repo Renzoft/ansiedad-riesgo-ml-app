@@ -7,6 +7,8 @@ from app.models.usuario import db, Usuario
 from app.models.habito import Habito
 from app.models.evaluacion import EvaluacionRiesgo
 from app.services.ml_service import predictor
+from flask import request
+from datetime import datetime, timedelta, timezone
 
 evaluaciones_bp = Blueprint("evaluaciones", __name__, url_prefix="/api/v1")
 
@@ -19,15 +21,15 @@ def evaluar_riesgo():
     try:
         # 1. Obtener usuario_id desde el token
         usuario_id = int(get_jwt_identity())
-        
+
         # 2. Consultar usuario
         usuario = Usuario.query.get(usuario_id)
         if not usuario:
             return jsonify({"error": "No encontrado", "mensaje": "Usuario no encontrado"}), 404
-            
+
         # 3. Consultar el último registro de hábito
         ultimo_habito = Habito.query.filter_by(usuario_id=usuario_id).order_by(Habito.fecha.desc()).first()
-        
+
         # 4. Validación Crítica
         if not ultimo_habito:
             return jsonify({
@@ -78,10 +80,10 @@ def evaluar_riesgo():
             categoria_riesgo=categoria,
             explicacion=explicacion
         )
-        
+
         db.session.add(nueva_evaluacion)
         db.session.commit()
-        
+
         return jsonify(nueva_evaluacion.to_dict()), 201
 
     except Exception as e:
@@ -89,21 +91,64 @@ def evaluar_riesgo():
         return jsonify({"error": "Error interno del servidor", "mensaje": str(e)}), 500
 
 
-@evaluaciones_bp.route('/evaluaciones/historial', methods=['GET'])
+@evaluaciones_bp.route("/evaluaciones/historial", methods=["GET"])
 @jwt_required()
 def historial_evaluaciones():
     """
-    Retorna todas las evaluaciones del usuario autenticado (Parte de HU-11/HU-14)
+    Retorna historial emocional para gráficas
     """
+
     try:
         usuario_id = int(get_jwt_identity())
-        
-        # Consultar evaluaciones ordenadas por created_at descendente
-        evaluaciones = EvaluacionRiesgo.query.filter_by(usuario_id=usuario_id)\
-                                             .order_by(EvaluacionRiesgo.created_at.desc()).all()
-                                             
-        resultado = [evaluacion.to_dict() for evaluacion in evaluaciones]
+
+        periodo = request.args.get("periodo", "mes")
+
+        fecha_limite = datetime.now(timezone.utc)
+
+        if periodo == "mes":
+            fecha_limite = fecha_limite - timedelta(days=30)
+
+        elif periodo == "trimestre":
+            fecha_limite = fecha_limite - timedelta(days=90)
+
+        elif periodo == "anio":
+            fecha_limite = fecha_limite - timedelta(days=365)
+
+        evaluaciones = (
+            EvaluacionRiesgo.query.filter(
+                EvaluacionRiesgo.usuario_id == usuario_id,
+                EvaluacionRiesgo.created_at >= fecha_limite,
+            )
+            .order_by(EvaluacionRiesgo.created_at.asc())
+            .all()
+        )
+
+        resultado = []
+
+        for evaluacion in evaluaciones:
+
+            habito = Habito.query.filter_by(
+                usuario_id=usuario_id, fecha=evaluacion.fecha
+            ).first()
+
+            resultado.append(
+                {
+                    "fecha": evaluacion.fecha.isoformat(),
+                    "probabilidad_ansiedad": evaluacion.probabilidad_ansiedad,
+                    "categoria_riesgo": evaluacion.categoria_riesgo,
+                    "explicacion": evaluacion.explicacion,
+                    # TOOLTIP DATA
+                    "habitos": {
+                        "sleep_hours": habito.sleep_hours if habito else None,
+                        "exercise_freq": habito.exercise_freq if habito else None,
+                        "screen_time": habito.screen_time if habito else None,
+                        "diet_quality": habito.diet_quality if habito else None,
+                        "sleep_quality": habito.sleep_quality if habito else None,
+                    },
+                }
+            )
+
         return jsonify(resultado), 200
-        
+
     except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "mensaje": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
