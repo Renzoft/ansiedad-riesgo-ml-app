@@ -106,6 +106,7 @@ def _categorizar_riesgo(probabilidad):
 # ==========================================
 @evaluaciones_bp.route('/', methods=['POST'])
 @jwt_required()
+@role_required(ROLE_ESTUDIANTE)
 def realizar_evaluacion():
     """
     Recibe las 15 variables, las persiste en 'evaluacion', ejecuta el modelo ML,
@@ -184,6 +185,7 @@ def realizar_evaluacion():
 # ==========================================
 @evaluaciones_bp.route('/historial', methods=['GET'])
 @jwt_required()
+@role_required(ROLE_ESTUDIANTE)
 def historial_evaluaciones():
     """
     Retorna todas las evaluaciones del usuario autenticado con sus
