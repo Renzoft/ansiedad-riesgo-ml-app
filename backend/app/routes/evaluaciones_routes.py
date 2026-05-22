@@ -9,6 +9,8 @@ from app.models.evaluacion import Evaluacion
 from app.models.resultado_ml import ResultadoML
 from app.models.recomendacion import Recomendacion
 from app.services.ml_service import predictor
+from app.utils.roles import ROLE_ESTUDIANTE, ROLE_MEDICO, ROLE_ADMIN
+from app.utils.decorators import role_required
 
 evaluaciones_bp = Blueprint("evaluaciones", __name__, url_prefix="/api/v1/evaluaciones")
 
