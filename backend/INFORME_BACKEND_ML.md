@@ -14,9 +14,8 @@ El backend está desarrollado utilizando **Python** y el framework **Flask**, co
 - **SQLite:** Base de datos relacional ligera utilizada en la fase actual de desarrollo.
 
 ### Módulos Principales (Blueprints)
-- `/registro` y `/login`: Gestión segura de identidades, perfiles multidimensionales y contraseñas encriptadas (usando bcrypt).
-- `/habitos`: Endpoints protegidos para registrar y consultar indicadores de estilo de vida diarios (sueño, dieta, pantallas).
-- `/api/v1/evaluaciones`: Endpoints para generar predicciones de riesgo emocional e interrogar el historial de evaluaciones del usuario.
+- `/registro` y `/login`: Gestión segura de identidades y contraseñas encriptadas (usando bcrypt).
+- `/api/v1/evaluaciones`: Endpoints transaccionales para recibir las 15 variables del test, generar predicciones de riesgo emocional, vincular recomendaciones y consultar el historial del usuario.
 
 ---
 
@@ -25,7 +24,7 @@ El backend está desarrollado utilizando **Python** y el framework **Flask**, co
 El propósito central de la aplicación es identificar a estudiantes universitarios con riesgo de ansiedad de manera temprana, basándose en variables psicoeducativas y de estilo de vida.
 
 ### Vector de Características
-El modelo predice el riesgo combinando **15 características estrictas**, extraídas de dos fuentes: el perfil del estudiante (9 variables) y su último hábito diario (6 variables).
+El modelo predice el riesgo combinando **15 características estrictas**, las cuales son ingresadas por el estudiante en el momento de realizar el test y se guardan de manera **transaccional** en la tabla `evaluacion` por cada intento.
 
 **Orden estricto procesado por el modelo:**
 1. `phq9` (Depresión, 0-27)
@@ -79,8 +78,8 @@ probabilidad = (phq9 / 27.0) * 0.6 + (gad7 / 21.0) * 0.4
 ```
 Esto permite probar las lógicas de categorización y guardado en la base de datos sin depender del despliegue de los modelos.
 
-### Categorización de Resultados y Acción
-La probabilidad resultante (entre 0 y 1) se clasifica automáticamente para devolver información amigable y empática al frontend:
+### Categorización de Resultados y Recomendaciones
+La probabilidad resultante (entre 0 y 1) se clasifica automáticamente para devolver información amigable y empática al frontend, la cual se vincula mediante una relación Muchos-a-Muchos con un catálogo de recomendaciones almacenado en la base de datos:
 - **< 0.35 (BAJO):** Equilibrio saludable.
 - **0.35 a 0.70 (MEDIO):** Ciertos niveles de alerta (Requiere revisión de hábitos).
 - **> 0.70 (ALTO):** Alta predisposición a la ansiedad. Recomienda orientación inmediata.

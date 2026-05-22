@@ -50,6 +50,7 @@ Si acabas de clonar este repositorio y estás usando **Windows**, sigue estos pa
 5. **Inicializar y actualizar la base de datos (SQLite local):**
    ```bash
    flask db upgrade
+   flask init-recomendaciones
    ```
 6. **Levantar el servidor:**
    ```bash
