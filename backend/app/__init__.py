@@ -17,6 +17,7 @@ from app.models.resultado_ml import ResultadoML
 from app.models.recomendacion import Recomendacion, resultado_recomendaciones
 
 from app.routes.evaluaciones_routes import evaluaciones_bp  # Rutas de evaluaciones
+from app.routes.admin_routes import admin_bp  # Rutas administrativas
 
 migrate = Migrate()  # Manejo de migraciones
 jwt = JWTManager()  # Manejo de JWT(JSON Web Tokens)
@@ -54,6 +55,7 @@ def crear_app():
     # ==========================================
     app.register_blueprint(auth_bp)
     app.register_blueprint(evaluaciones_bp)
+    app.register_blueprint(admin_bp)
 
     # ==========================================
     # COMANDOS CLI
