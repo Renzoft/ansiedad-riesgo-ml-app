@@ -9,8 +9,8 @@ import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/evaluacion_viewmodel.dart';
 
 // Screens
+import 'views/onboarding/onboarding_screen.dart';
 import 'views/auth/login_screen.dart';
-
 import 'views/home/home_screen.dart';
 import 'views/evaluacion/evaluacion_screen.dart';
 import 'views/evaluacion/resultado_screen.dart';
@@ -56,8 +56,9 @@ class AnsiedadApp extends StatelessWidget {
           ),
           scaffoldBackgroundColor: const Color(0xFFF5F5FC),
         ),
-        initialRoute: '/login',
+        initialRoute: '/onboarding',
         routes: {
+          '/onboarding': (context) => const OnboardingScreen(),
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
           '/evaluacion': (context) => const EvaluacionScreen(),
