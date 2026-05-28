@@ -15,11 +15,17 @@ class AuthViewModel extends ChangeNotifier {
   String? _error;
   String? _token;
   bool _isAuthenticated = false;
+  Map<String, dynamic>? _usuario;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get token => _token;
   bool get isAuthenticated => _isAuthenticated;
+  Map<String, dynamic>? get usuario => _usuario;
+  String? get rol => _usuario?['rol'] as String?;
+  String? get nombre => _usuario?['nombre'] as String?;
+  String? get correo => _usuario?['correo'] as String?;
+  int? get idUsuario => _usuario?['id_usuario'] as int?;
 
   // ==========================================
   // LOGIN
@@ -37,6 +43,7 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       _token = response['token'] as String?;
+      _usuario = response['usuario'] as Map<String, dynamic>?;
       if (_token != null) {
         _apiService.setToken(_token);
         _isAuthenticated = true;
@@ -103,6 +110,7 @@ class AuthViewModel extends ChangeNotifier {
   void logout() {
     _token = null;
     _isAuthenticated = false;
+    _usuario = null;
     _apiService.setToken(null);
     notifyListeners();
   }

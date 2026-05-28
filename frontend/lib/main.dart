@@ -12,6 +12,8 @@ import 'viewmodels/evaluacion_viewmodel.dart';
 import 'views/onboarding/onboarding_screen.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/home_screen.dart';
+import 'views/admin/admin_home_screen.dart';
+import 'views/medico/medico_home_screen.dart';
 import 'views/evaluacion/evaluacion_screen.dart';
 import 'views/evaluacion/resultado_screen.dart';
 import 'views/evaluacion/historial_screen.dart';
@@ -61,6 +63,8 @@ class AnsiedadApp extends StatelessWidget {
           '/onboarding': (context) => const OnboardingScreen(),
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
+          '/admin-home': (context) => const AdminHomeScreen(),
+          '/medico-home': (context) => const MedicoHomeScreen(),
           '/evaluacion': (context) => const EvaluacionScreen(),
           '/resultado': (context) => const ResultadoScreen(),
           '/historial': (context) => const HistorialScreen(),

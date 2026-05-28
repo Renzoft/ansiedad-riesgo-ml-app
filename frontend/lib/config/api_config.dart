@@ -22,4 +22,10 @@ class ApiConfig {
   // ==========================================
   static const String habitos = '$baseUrl/habitos';
   static const String ultimoHabito = '$baseUrl/habitos/ultimo';
+
+  // ==========================================
+  // ENDPOINTS DE ADMIN
+  // ==========================================
+  static const String adminUsuarios = '$baseUrl/api/v1/admin/usuarios';
+  static const String adminEstadisticas = '$baseUrl/api/v1/admin/usuarios/estadisticas';
 }
