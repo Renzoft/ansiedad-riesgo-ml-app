@@ -110,4 +110,8 @@ def login():
         identity=str(usuario.id_usuario), additional_claims={"rol": usuario.rol}
     )
 
-    return jsonify({"mensaje": "Login exitoso", "token": token}), 200
+    return jsonify({
+        "mensaje": "Login exitoso",
+        "token": token,
+        "usuario": usuario.to_dict(),
+    }), 200
