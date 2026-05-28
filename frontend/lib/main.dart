@@ -42,12 +42,19 @@ class AnsiedadApp extends StatelessWidget {
         title: 'Evaluación de Riesgo',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.indigo,
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF6366F1),
+            secondary: Color(0xFF6366F1),
+            surface: Colors.white,
+          ),
           useMaterial3: true,
           appBarTheme: const AppBarTheme(
             centerTitle: true,
             elevation: 1,
+            backgroundColor: Colors.white,
+            foregroundColor: Color(0xFF1E293B),
           ),
+          scaffoldBackgroundColor: const Color(0xFFF5F5FC),
         ),
         initialRoute: '/login',
         routes: {
