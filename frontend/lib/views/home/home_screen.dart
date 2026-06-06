@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/evaluacion_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../models/evaluacion.dart';
 
-/// Dashboard principal con vista de bienestar mental
+/// Dashboard principal con vista de bienestar mental dinámica en español
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -12,7 +16,36 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentNavIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Cargar historial real de evaluaciones del usuario al entrar al dashboard
+      context.read<EvaluacionViewModel>().obtenerHistorial();
+    });
+  }
+
+  String _formatearFecha(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'No disponible';
+    try {
+      final dateTime = DateTime.parse(dateStr).toLocal();
+      return 'Último test: ${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} a las ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      if (dateStr.length >= 10) {
+        return 'Último test: ${dateStr.substring(0, 10)}';
+      }
+      return 'Último test: $dateStr';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authVM = context.watch<AuthViewModel>();
+    final evaluacionVM = context.watch<EvaluacionViewModel>();
+
+    final nombreUsuario = authVM.nombre ?? 'Estudiante';
+    final historial = evaluacionVM.historial;
+    final tieneHistorial = historial.isNotEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -20,33 +53,59 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             // ==========================================
-            // SCROLLABLE CONTENT
+            // CONTENIDO PRINCIPAL
             // ==========================================
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 20),
-                    _buildRiskCard(),
-                    const SizedBox(height: 16),
-                    _buildTrendChart(),
-                    const SizedBox(height: 16),
-                    _buildSecondaryMetrics(),
-                    const SizedBox(height: 16),
-                    _buildStartEvaluationButton(),
-                    const SizedBox(height: 16),
-                    _buildQuickTip(),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
+              child: evaluacionVM.isLoading && historial.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6366F1),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () => evaluacionVM.obtenerHistorial(),
+                      color: const Color(0xFF6366F1),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(nombreUsuario),
+                            const SizedBox(height: 20),
+
+                            if (!tieneHistorial) ...[
+                              // ==========================================
+                              // PANTALLA DE BIENVENIDA (USUARIO NUEVO)
+                              // ==========================================
+                              _buildWelcomeCard(),
+                              const SizedBox(height: 20),
+                              _buildStartEvaluationButton(esNuevo: true),
+                              const SizedBox(height: 20),
+                              _buildInfoSection(),
+                            ] else ...[
+                              // ==========================================
+                              // DASHBOARD DINÁMICO CON HISTORIAL REAL
+                              // ==========================================
+                              _buildRiskCard(historial.first),
+                              const SizedBox(height: 16),
+                              _buildTrendChart(historial),
+                              const SizedBox(height: 16),
+                              _buildSecondaryMetrics(historial.first),
+                              const SizedBox(height: 16),
+                              _buildStartEvaluationButton(esNuevo: false),
+                              const SizedBox(height: 16),
+                              _buildQuickTip(historial.first),
+                            ],
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
 
             // ==========================================
-            // FIXED BOTTOM NAVIGATION
+            // BARRA DE NAVEGACIÓN INFERIOR FIJA
             // ==========================================
             _buildBottomNav(),
           ],
@@ -58,21 +117,21 @@ class _HomeScreenState extends State<HomeScreen> {
   // ==========================================
   // HEADER
   // ==========================================
-  Widget _buildHeader() {
-    return const Column(
+  Widget _buildHeader(String nombre) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome back!',
-          style: TextStyle(
+          '¡Hola, $nombre! 👋',
+          style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Color(0xFF1E293B),
           ),
         ),
-        SizedBox(height: 4),
-        Text(
-          "Here's your mental health overview",
+        const SizedBox(height: 4),
+        const Text(
+          'Este es el estado de tu salud y bienestar mental.',
           style: TextStyle(
             fontSize: 14,
             color: Color(0xFF94A3B8),
@@ -83,17 +142,113 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // MAIN RISK CARD
+  // TARJETA DE BIENVENIDA (ESTADO VACÍO)
   // ==========================================
-  Widget _buildRiskCard() {
+  Widget _buildWelcomeCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.spa_rounded,
+              size: 28,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '¡Te damos la bienvenida!',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Tu salud mental es una prioridad. Realiza tu primera evaluación interactiva para estimar tu riesgo de ansiedad a través de Inteligencia Artificial y obtener recomendaciones preventivas de forma instantánea.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // TARJETA DE RIESGO DINÁMICA
+  // ==========================================
+  Widget _buildRiskCard(Evaluacion ultimaEval) {
+    final resultado = ultimaEval.resultado;
+    final String nivelRiesgo = resultado?.nivelRiesgo ?? 'BAJO';
+    final double probabilidad = resultado?.probabilidadAnsiedad ?? 0.0;
+
+    // Configuración visual según nivel de riesgo
+    Color baseColor;
+    Color bgCardColor;
+    Color borderColor;
+    IconData riskIcon;
+    String labelRiesgo;
+
+    switch (nivelRiesgo.toUpperCase()) {
+      case 'ALTO':
+        baseColor = const Color(0xFFDC2626);
+        bgCardColor = const Color(0xFFFEF2F2);
+        borderColor = const Color(0xFFFCA5A5);
+        riskIcon = Icons.error_outline_rounded;
+        labelRiesgo = 'Alto';
+        break;
+      case 'MEDIO':
+        baseColor = const Color(0xFFD97706);
+        bgCardColor = const Color(0xFFFFF7ED);
+        borderColor = const Color(0xFFFDBA74);
+        riskIcon = Icons.warning_amber_rounded;
+        labelRiesgo = 'Medio';
+        break;
+      case 'BAJO':
+      default:
+        baseColor = const Color(0xFF059669);
+        bgCardColor = const Color(0xFFECFDF5);
+        borderColor = const Color(0xFF6EE7B7);
+        riskIcon = Icons.check_circle_outline_rounded;
+        labelRiesgo = 'Bajo';
+        break;
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
-        borderRadius: BorderRadius.circular(20),
+        color: bgCardColor,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFF6EE7B7).withValues(alpha: 0.5),
+          color: borderColor.withOpacity(0.5),
           width: 1.5,
         ),
       ),
@@ -102,36 +257,35 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              // Left side - Text info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Current Risk Level',
+                    Text(
+                      'Nivel de Riesgo Actual',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF059669),
-                        fontWeight: FontWeight.w500,
+                        color: baseColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Low',
+                    Text(
+                      labelRiesgo,
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF059669),
+                        color: baseColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         const Text(
-                          'Anxiety Score',
+                          'Probabilidad de Ansiedad',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF6B7280),
+                            color: Color(0xFF64748B),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -141,15 +295,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF059669).withValues(alpha: 0.1),
+                            color: baseColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text(
-                            '27%',
+                          child: Text(
+                            '${(probabilidad * 100).toStringAsFixed(0)}%',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF059669),
+                              color: baseColor,
                             ),
                           ),
                         ),
@@ -158,44 +312,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-
-              // Right side - Icon badge
               Container(
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF059669).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
+                  color: baseColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(
-                  Icons.check_circle_outline,
+                child: Icon(
+                  riskIcon,
                   size: 32,
-                  color: Color(0xFF059669),
+                  color: baseColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: 0.27,
+              value: probabilidad,
               minHeight: 8,
-              backgroundColor: const Color(0xFFD1FAE5),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF059669),
-              ),
+              backgroundColor: baseColor.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(baseColor),
             ),
           ),
           const SizedBox(height: 12),
-
-          const Text(
-            'Last assessment: 2 days ago',
-            style: TextStyle(
+          Text(
+            _formatearFecha(ultimaEval.fechaRealizacion),
+            style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF9CA3AF),
+              color: Color(0xFF94A3B8),
             ),
           ),
         ],
@@ -204,18 +351,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // 7-DAY TREND CHART
+  // GRÁFICO DE TENDENCIA (DATOS REALES)
   // ==========================================
-  Widget _buildTrendChart() {
+  Widget _buildTrendChart(List<Evaluacion> historialCompleto) {
+    // Tomar las últimas 7 evaluaciones en orden cronológico (las más antiguas a las más recientes)
+    final evaluacionesOrdenadas = historialCompleto.reversed.toList();
+    List<Evaluacion> ultimasEval = evaluacionesOrdenadas;
+    if (evaluacionesOrdenadas.length > 7) {
+      ultimasEval = evaluacionesOrdenadas.sublist(evaluacionesOrdenadas.length - 7);
+    }
+
+    final List<double> dataPoints = ultimasEval
+        .map((e) => (e.resultado?.probabilidadAnsiedad as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final List<String> labels = ultimasEval.map((e) {
+      if (e.fechaRealizacion == null) return '';
+      try {
+        final dt = DateTime.parse(e.fechaRealizacion!);
+        return '${dt.day}/${dt.month}';
+      } catch (_) {
+        return '';
+      }
+    }).toList();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -225,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '7-Day Trend',
+            'Tendencia de Ansiedad',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -234,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Your anxiety levels this week',
+            'Tus niveles de probabilidad de riesgo registrados en el tiempo',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF94A3B8),
@@ -245,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 160,
             child: CustomPaint(
               size: const Size(double.infinity, 160),
-              painter: _TrendChartPainter(),
+              painter: _TrendChartPainter(dataPoints: dataPoints, labels: labels),
             ),
           ),
         ],
@@ -254,232 +422,246 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // SECONDARY METRICS
+  // METRICAS SECUNDARIAS
   // ==========================================
-  Widget _buildSecondaryMetrics() {
+  Widget _buildSecondaryMetrics(Evaluacion ultimaEval) {
+    // Mapeo dinámico de datos de la base de datos
+    final sleep = (ultimaEval.sleepHours as num?)?.toDouble() ?? 0.0;
+    final exercise = (ultimaEval.exerciseFreq as num?)?.toDouble() ?? 0.0;
+    final stressLvlVal = (ultimaEval.academicStress as num?)?.toDouble() ?? 5.0;
+
+    String stressLabel = 'Medio';
+    Color stressColor = const Color(0xFFF59E0B);
+    Color stressBg = const Color(0xFFFEF3C7);
+
+    if (stressLvlVal <= 3.0) {
+      stressLabel = 'Bajo';
+      stressColor = const Color(0xFF10B981);
+      stressBg = const Color(0xFFD1FAE5);
+    } else if (stressLvlVal >= 8.0) {
+      stressLabel = 'Alto';
+      stressColor = const Color(0xFFEF4444);
+      stressBg = const Color(0xFFFEE2E2);
+    }
+
     return Column(
       children: [
-        // Row 1: Sleep + Stress
         Row(
           children: [
-            Expanded(child: _buildSleepCard()),
+            // Sleep Card
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDBEAFE),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.nightlight_round,
+                            size: 20,
+                            color: Color(0xFF3B82F6),
+                          ),
+                        ),
+                        const Text(
+                          'Sueño',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${sleep.toStringAsFixed(1)}h',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Promedio diario',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildStressCard()),
+
+            // Stress Card
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: stressBg,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.bolt,
+                            size: 20,
+                            color: stressColor,
+                          ),
+                        ),
+                        const Text(
+                          'Estrés',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      stressLabel,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: stressColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Carga de estudio',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
-        // Row 2: Physical Activity (full width)
-        _buildActivityCard(),
+
+        // Activity Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.favorite,
+                  size: 22,
+                  color: Color(0xFF059669),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${exercise.toStringAsFixed(0)} ${exercise == 1 ? "día" : "días"}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Frecuencia semanal de deporte',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Activo',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSleepCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.nightlight_round,
-                  size: 20,
-                  color: Color(0xFF3B82F6),
-                ),
-              ),
-              const Text(
-                'Avg.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            '7.2h',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Sleep',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStressCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.bolt,
-                  size: 20,
-                  color: Color(0xFFF59E0B),
-                ),
-              ),
-              const Text(
-                'Level',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Low',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Stress',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD1FAE5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.favorite,
-              size: 22,
-              color: Color(0xFF059669),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '4 sessions',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Physical Activity',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF94A3B8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              'Weekly',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ==========================================
-  // START EVALUATION BUTTON
+  // BOTÓN DE NUEVA EVALUACIÓN
   // ==========================================
-  Widget _buildStartEvaluationButton() {
+  Widget _buildStartEvaluationButton({required bool esNuevo}) {
     return SizedBox(
       width: double.infinity,
       height: 54,
@@ -488,24 +670,24 @@ class _HomeScreenState extends State<HomeScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6366F1),
           foregroundColor: Colors.white,
-          elevation: 8,
-          shadowColor: const Color(0xFF6366F1).withValues(alpha: 0.4),
+          elevation: esNuevo ? 8 : 4,
+          shadowColor: const Color(0xFF6366F1).withOpacity(0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Start New Evaluation',
-              style: TextStyle(
+              esNuevo ? 'Iniciar mi primera evaluación' : 'Iniciar Nueva Evaluación',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(width: 6),
-            Icon(Icons.chevron_right, size: 22),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right, size: 22),
           ],
         ),
       ),
@@ -513,17 +695,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // QUICK TIP BOX
+  // CONSEJO RÁPIDO (DASHBOARD ACTIVADO)
   // ==========================================
-  Widget _buildQuickTip() {
+  Widget _buildQuickTip(Evaluacion ultimaEval) {
+    String tipText = 'Mantener rutinas fijas de descanso ayuda notablemente a estabilizar tus niveles de ansiedad.';
+    if (ultimaEval.sleepHours < 6.0) {
+      tipText = 'Notamos que duermes menos de 6 horas. Un sueño insuficiente aumenta la vulnerabilidad al estrés.';
+    } else if (ultimaEval.exerciseFreq < 2) {
+      tipText = 'Agregar una sesión corta de caminata o estiramiento de 15 minutos puede ayudarte a disminuir la tensión.';
+    } else if (ultimaEval.academicStress > 7) {
+      tipText = 'El estrés por estudios se nota elevado. Realiza pausas activas de 5 minutos por cada 45 minutos de estudio.';
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFEEF2FF),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFC7D2FE).withValues(alpha: 0.5),
+          color: const Color(0xFFC7D2FE).withOpacity(0.5),
           width: 1,
         ),
       ),
@@ -533,12 +724,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDBEAFE),
+            decoration: const BoxDecoration(
+              color: Color(0xFFDBEAFE),
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.info_outline,
+              Icons.lightbulb_outline,
               size: 18,
               color: Color(0xFF3B82F6),
             ),
@@ -549,7 +740,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Quick Tip',
+                  'Consejo de Bienestar',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -558,10 +749,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Regular sleep schedules can significantly reduce anxiety. Try going to bed at the same time each night.',
+                  tipText,
                   style: TextStyle(
                     fontSize: 13,
-                    color: const Color(0xFF475569).withValues(alpha: 0.9),
+                    color: const Color(0xFF475569).withOpacity(0.9),
                     height: 1.5,
                   ),
                 ),
@@ -574,7 +765,86 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // FIXED BOTTOM NAVIGATION BAR
+  // SECCIÓN INFORMATIVA PARA NUEVO USUARIO
+  // ==========================================
+  Widget _buildInfoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            '¿Cómo funciona?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+        ),
+        _buildInfoTile(
+          icon: Icons.shield_outlined,
+          title: 'Totalmente Privado',
+          description: 'Tus respuestas son confidenciales y se procesan de manera local y encriptada.',
+        ),
+        const SizedBox(height: 12),
+        _buildInfoTile(
+          icon: Icons.auto_awesome_outlined,
+          title: 'Algoritmo Multimodelo',
+          description: 'Combinamos predicciones de 6 modelos de Machine Learning para garantizar un resultado preciso.',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFF6366F1), size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // NAV BAR INFERIOR
   // ==========================================
   Widget _buildBottomNav() {
     return Container(
@@ -582,7 +852,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -598,26 +868,20 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildNavItem(
                 index: 0,
                 icon: Icons.home_rounded,
-                label: 'Home',
+                label: 'Inicio',
                 isActive: _currentNavIndex == 0,
               ),
               _buildNavItem(
                 index: 1,
                 icon: Icons.show_chart_rounded,
-                label: 'Progress',
+                label: 'Historial',
                 isActive: _currentNavIndex == 1,
               ),
               _buildNavItem(
                 index: 2,
-                icon: Icons.notifications_outlined,
-                label: 'Alerts',
-                isActive: _currentNavIndex == 2,
-              ),
-              _buildNavItem(
-                index: 3,
                 icon: Icons.person_outline_rounded,
-                label: 'Profile',
-                isActive: _currentNavIndex == 3,
+                label: 'Perfil',
+                isActive: _currentNavIndex == 2,
               ),
             ],
           ),
@@ -637,24 +901,20 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _currentNavIndex = index;
         });
-        // Navigate to the corresponding screen
         switch (index) {
           case 0:
-            // Home - already here
+            // Ya estamos aquí
             break;
           case 1:
             Navigator.pushNamed(context, '/historial');
             break;
           case 2:
-            Navigator.pushNamed(context, '/historial');
-            break;
-          case 3:
             Navigator.pushNamed(context, '/perfil');
             break;
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: isActive
             ? BoxDecoration(
                 color: const Color(0xFFEEF2FF),
@@ -667,9 +927,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               icon,
               size: 24,
-              color: isActive
-                  ? const Color(0xFF6366F1)
-                  : const Color(0xFF94A3B8),
+              color: isActive ? const Color(0xFF6366F1) : const Color(0xFF94A3B8),
             ),
             const SizedBox(height: 4),
             Text(
@@ -677,9 +935,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                color: isActive
-                    ? const Color(0xFF6366F1)
-                    : const Color(0xFF94A3B8),
+                color: isActive ? const Color(0xFF6366F1) : const Color(0xFF94A3B8),
               ),
             ),
           ],
@@ -690,29 +946,24 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ==========================================
-// CUSTOM PAINTER FOR 7-DAY TREND CHART
+// PAINTER DEL GRÁFICO (DATOS REALES)
 // ==========================================
 class _TrendChartPainter extends CustomPainter {
+  final List<double> dataPoints;
+  final List<String> labels;
+
+  _TrendChartPainter({required this.dataPoints, required this.labels});
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (dataPoints.isEmpty) return;
+
     final width = size.width;
     final height = size.height;
 
-    // Data points (normalized 0-1 based on max value of 40)
-    final dataPoints = [
-      35.0 / 40.0, // Mon
-      40.0 / 40.0, // Tue
-      32.0 / 40.0, // Wed
-      28.0 / 40.0, // Thu
-      30.0 / 40.0, // Fri
-      25.0 / 40.0, // Sat
-      27.0 / 40.0, // Sun
-    ];
+    final yLabels = ['100%', '75%', '50%', '25%', '0%'];
 
-    final labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final yLabels = ['40', '30', '20', '10', '0'];
-
-    const paddingLeft = 30.0;
+    const paddingLeft = 35.0;
     const paddingRight = 16.0;
     const paddingTop = 10.0;
     const paddingBottom = 28.0;
@@ -720,14 +971,13 @@ class _TrendChartPainter extends CustomPainter {
     final chartWidth = width - paddingLeft - paddingRight;
     final chartHeight = height - paddingTop - paddingBottom;
 
-    // Draw horizontal grid lines (dashed)
+    // Dibujar rejilla horizontal (discontinua)
     final gridPaint = Paint()
       ..color = const Color(0xFFE2E8F0)
       ..strokeWidth = 1;
 
     for (int i = 0; i < 5; i++) {
       final y = paddingTop + (chartHeight / 4) * i;
-      // Dashed line
       final dashCount = (chartWidth / 8).floor();
       for (int j = 0; j < dashCount; j += 2) {
         final startX = paddingLeft + (chartWidth / dashCount) * j;
@@ -740,7 +990,7 @@ class _TrendChartPainter extends CustomPainter {
       }
     }
 
-    // Draw Y-axis labels
+    // Dibujar etiquetas eje Y
     final yLabelPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );
@@ -748,7 +998,7 @@ class _TrendChartPainter extends CustomPainter {
       yLabelPainter.text = TextSpan(
         text: yLabels[i],
         style: const TextStyle(
-          fontSize: 10,
+          fontSize: 9,
           color: Color(0xFF94A3B8),
         ),
       );
@@ -757,52 +1007,56 @@ class _TrendChartPainter extends CustomPainter {
       yLabelPainter.paint(canvas, Offset(0, y));
     }
 
-    // Calculate points
+    // Calcular coordenadas de los puntos
     final points = <Offset>[];
-    for (int i = 0; i < dataPoints.length; i++) {
-      final x = paddingLeft + (chartWidth / (dataPoints.length - 1)) * i;
+    final count = dataPoints.length;
+    for (int i = 0; i < count; i++) {
+      final double xFactor = count > 1 ? i / (count - 1) : 0.5;
+      final x = paddingLeft + chartWidth * xFactor;
       final y = paddingTop + chartHeight * (1 - dataPoints[i]);
       points.add(Offset(x, y));
     }
 
-    // Draw gradient fill under line
-    final fillPath = Path();
-    fillPath.moveTo(points.first.dx, paddingTop + chartHeight);
-    for (final point in points) {
-      fillPath.lineTo(point.dx, point.dy);
+    if (count > 1) {
+      // Gradiente bajo la curva
+      final fillPath = Path();
+      fillPath.moveTo(points.first.dx, paddingTop + chartHeight);
+      for (final point in points) {
+        fillPath.lineTo(point.dx, point.dy);
+      }
+      fillPath.lineTo(points.last.dx, paddingTop + chartHeight);
+      fillPath.close();
+
+      final fillPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF6366F1).withOpacity(0.2),
+            const Color(0xFF6366F1).withOpacity(0.0),
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, width, height));
+
+      canvas.drawPath(fillPath, fillPaint);
+
+      // Dibujar línea principal
+      final linePaint = Paint()
+        ..color = const Color(0xFF6366F1)
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      final linePath = Path();
+      linePath.moveTo(points.first.dx, points.first.dy);
+      for (int i = 1; i < points.length; i++) {
+        linePath.lineTo(points[i].dx, points[i].dy);
+      }
+      canvas.drawPath(linePath, linePaint);
     }
-    fillPath.lineTo(points.last.dx, paddingTop + chartHeight);
-    fillPath.close();
 
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          const Color(0xFF059669).withValues(alpha: 0.2),
-          const Color(0xFF059669).withValues(alpha: 0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, width, height));
-
-    canvas.drawPath(fillPath, fillPaint);
-
-    // Draw the line
-    final linePaint = Paint()
-      ..color = const Color(0xFF059669)
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    final linePath = Path();
-    linePath.moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      linePath.lineTo(points[i].dx, points[i].dy);
-    }
-    canvas.drawPath(linePath, linePaint);
-
-    // Draw data points (dots)
+    // Dibujar puntos
     final dotPaint = Paint()
-      ..color = const Color(0xFF059669)
+      ..color = const Color(0xFF6366F1)
       ..style = PaintingStyle.fill;
 
     final dotBorderPaint = Paint()
@@ -815,7 +1069,7 @@ class _TrendChartPainter extends CustomPainter {
       canvas.drawCircle(point, 3.5, dotPaint);
     }
 
-    // Draw X-axis labels
+    // Dibujar etiquetas de X
     final xLabelPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );
@@ -823,12 +1077,13 @@ class _TrendChartPainter extends CustomPainter {
       xLabelPainter.text = TextSpan(
         text: labels[i],
         style: const TextStyle(
-          fontSize: 10,
+          fontSize: 9,
           color: Color(0xFF94A3B8),
         ),
       );
       xLabelPainter.layout();
-      final x = paddingLeft + (chartWidth / (labels.length - 1)) * i;
+      final double xFactor = count > 1 ? i / (count - 1) : 0.5;
+      final x = paddingLeft + chartWidth * xFactor;
       xLabelPainter.paint(
         canvas,
         Offset(x - xLabelPainter.width / 2, paddingTop + chartHeight + 8),
@@ -837,5 +1092,7 @@ class _TrendChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _TrendChartPainter oldDelegate) {
+    return oldDelegate.dataPoints != dataPoints || oldDelegate.labels != labels;
+  }
 }

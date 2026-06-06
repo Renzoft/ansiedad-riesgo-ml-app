@@ -1,9 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/evaluacion_viewmodel.dart';
-import '../../widgets/custom_button.dart';
 
-/// Pantalla con el formulario de las 15 variables para evaluar el riesgo
+class Pregunta {
+  final String key;
+  final String titulo;
+  final String pregunta;
+  final String descripcion;
+  final double min;
+  final double max;
+  final String unidad;
+  final String tipo; // 'SLIDER', 'CHIPS_DIAS', 'ESCALA_10', 'ESCALA_0_10', 'INPUT_GPA'
+
+  Pregunta({
+    required this.key,
+    required this.titulo,
+    required this.pregunta,
+    required this.descripcion,
+    required this.min,
+    required this.max,
+    this.unidad = '',
+    required this.tipo,
+  });
+}
+
+/// Pantalla interactiva paso a paso con las 15 variables de salud mental
 class EvaluacionScreen extends StatefulWidget {
   const EvaluacionScreen({super.key});
 
@@ -12,241 +33,765 @@ class EvaluacionScreen extends StatefulWidget {
 }
 
 class _EvaluacionScreenState extends State<EvaluacionScreen> {
+  final PageController _pageController = PageController();
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _gpaController = TextEditingController(text: '3.0');
 
-  // Controladores para las 15 variables
-  final _phq9 = TextEditingController(text: '0');
-  final _gad7 = TextEditingController(text: '0');
-  final _sleepHours = TextEditingController(text: '7');
-  final _exerciseFreq = TextEditingController(text: '3');
-  final _socialActivity = TextEditingController(text: '5');
-  final _onlineStress = TextEditingController(text: '5');
-  final _gpa = TextEditingController(text: '3.0');
-  final _familySupport = TextEditingController(text: '5');
-  final _screenTime = TextEditingController(text: '5');
-  final _academicStress = TextEditingController(text: '5');
-  final _dietQuality = TextEditingController(text: '5');
-  final _selfEfficacy = TextEditingController(text: '5');
-  final _peerRelationship = TextEditingController(text: '5');
-  final _financialStress = TextEditingController(text: '5');
-  final _sleepQuality = TextEditingController(text: '5');
+  int _currentPage = 0;
+
+  // Listado de las 15 preguntas estructuradas en español
+  final List<Pregunta> _preguntas = [
+    Pregunta(
+      key: 'phq9_score',
+      titulo: 'Estado de Ánimo (PHQ-9)',
+      pregunta: '¿Con qué frecuencia te han afectado problemas como poco interés, desánimo o dificultad para dormir en las últimas 2 semanas?',
+      descripcion: 'Nivel general de síntomas depresivos evaluados de forma profesional. (0 = Ninguno, 27 = Severo)',
+      min: 0,
+      max: 27,
+      tipo: 'SLIDER',
+    ),
+    Pregunta(
+      key: 'gad7_score',
+      titulo: 'Nivel de Ansiedad (GAD-7)',
+      pregunta: '¿Con qué frecuencia te has sentido nervioso, ansioso o con los nervios de punta en las últimas 2 semanas?',
+      descripcion: 'Nivel general de síntomas de ansiedad evaluados de forma profesional. (0 = Ninguno, 21 = Severo)',
+      min: 0,
+      max: 21,
+      tipo: 'SLIDER',
+    ),
+    Pregunta(
+      key: 'sleep_hours',
+      titulo: 'Horas de Sueño',
+      pregunta: '¿Cuántas horas promedio duermes diariamente en días hábiles?',
+      descripcion: 'El descanso promedio recomendado para estudiantes universitarios es de 7 a 8 horas.',
+      min: 3,
+      max: 10,
+      unidad: 'horas',
+      tipo: 'SLIDER',
+    ),
+    Pregunta(
+      key: 'exercise_freq',
+      titulo: 'Frecuencia de Ejercicio',
+      pregunta: '¿Cuántos días a la semana realizas actividad física o ejercicio?',
+      descripcion: 'Hacer ejercicio ayuda a mitigar las hormonas del estrés y mejora el ánimo.',
+      min: 0,
+      max: 7,
+      unidad: 'días',
+      tipo: 'CHIPS_DIAS',
+    ),
+    Pregunta(
+      key: 'social_activity',
+      titulo: 'Actividad Social',
+      pregunta: '¿Cómo calificarías tu nivel de interacción social y tiempo de calidad con amigos o familia?',
+      descripcion: 'Califica de 0 (Aislamiento absoluto) a 10 (Vida social óptima y satisfactoria).',
+      min: 0,
+      max: 10,
+      tipo: 'ESCALA_0_10',
+    ),
+    Pregunta(
+      key: 'online_stress',
+      titulo: 'Estrés en Redes Sociales',
+      pregunta: '¿Qué nivel de estrés, agobio o presión te genera el uso de internet o redes sociales?',
+      descripcion: 'Califica de 1 (Ningún estrés o uso relajado) a 10 (Estrés extremo, acoso o adicción).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'gpa',
+      titulo: 'Promedio Académico (GPA)',
+      pregunta: '¿Cuál es tu promedio ponderado de calificaciones acumulado actual (GPA)?',
+      descripcion: 'Ingresa tu calificación promedio actual (rango decimal de 0.0 a 5.0).',
+      min: 0.0,
+      max: 5.0,
+      tipo: 'INPUT_GPA',
+    ),
+    Pregunta(
+      key: 'family_support',
+      titulo: 'Apoyo Familiar',
+      pregunta: '¿Qué tanto apoyo emocional, económico o social percibes de parte de tu familia?',
+      descripcion: 'Califica de 1 (Ningún apoyo o ambiente hostil) a 10 (Apoyo incondicional y excelente relación).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'screen_time',
+      titulo: 'Tiempo en Pantalla',
+      pregunta: '¿Cuántas horas promedio al día pasas frente a una pantalla (celular, laptop, consola)?',
+      descripcion: 'El tiempo de pantalla excesivo puede afectar tu visión y alterar tus ciclos de sueño.',
+      min: 1,
+      max: 12,
+      unidad: 'horas',
+      tipo: 'SLIDER',
+    ),
+    Pregunta(
+      key: 'academic_stress',
+      titulo: 'Estrés Académico',
+      pregunta: '¿Qué tan estresado te sientes debido a la carga académica (tareas, exámenes, proyectos)?',
+      descripcion: 'Califica de 1 (Bajo control, sin presiones) a 10 (Estrés constante y abrumador).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'diet_quality',
+      titulo: 'Calidad de Alimentación',
+      pregunta: '¿Cómo evaluarías la calidad, balance y regularidad de tu alimentación diaria?',
+      descripcion: 'Califica de 1 (Poco saludable, comida rápida, saltas comidas) a 10 (Dieta nutritiva y equilibrada).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'self_efficacy',
+      titulo: 'Nivel de Autoeficacia',
+      pregunta: '¿Qué tanta confianza tienes en tu capacidad para resolver problemas y lograr tus metas?',
+      descripcion: 'Califica de 1 (Muy inseguro de mí mismo) a 10 (Confianza absoluta en mis capacidades).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'peer_relationship',
+      titulo: 'Relaciones con Compañeros',
+      pregunta: '¿Cómo consideras que es tu relación y nivel de integración con tus compañeros de estudio?',
+      descripcion: 'Califica de 1 (Mala relación, conflictos o aislamiento) a 10 (Relaciones excelentes y de apoyo).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'financial_stress',
+      titulo: 'Preocupación Económica',
+      pregunta: '¿Qué nivel de preocupación o estrés te produce la situación económica en tu hogar o personal?',
+      descripcion: 'Califica de 1 (Tranquilidad financiera completa) a 10 (Estrés financiero constante y grave).',
+      min: 1,
+      max: 10,
+      tipo: 'ESCALA_10',
+    ),
+    Pregunta(
+      key: 'sleep_quality',
+      titulo: 'Calidad del Sueño',
+      pregunta: '¿Cómo calificarías la calidad general de tu descanso (si te despiertas con energía o con fatiga)?',
+      descripcion: 'Califica de 0 (Sueño interrumpido y cansancio profundo) a 10 (Sueño continuo y totalmente reparador).',
+      min: 0,
+      max: 10,
+      tipo: 'ESCALA_0_10',
+    ),
+  ];
+
+  // Mapa para guardar las respuestas ingresadas por el usuario
+  final Map<String, double> _respuestas = {
+    'phq9_score': 0,
+    'gad7_score': 0,
+    'sleep_hours': 7,
+    'exercise_freq': 3,
+    'social_activity': 5,
+    'online_stress': 5,
+    'gpa': 3.0,
+    'family_support': 7,
+    'screen_time': 5,
+    'academic_stress': 5,
+    'diet_quality': 6,
+    'self_efficacy': 6,
+    'peer_relationship': 7,
+    'financial_stress': 4,
+    'sleep_quality': 6,
+  };
 
   @override
   void dispose() {
-    for (final c in [
-      _phq9, _gad7, _sleepHours, _exerciseFreq, _socialActivity,
-      _onlineStress, _gpa, _familySupport, _screenTime, _academicStress,
-      _dietQuality, _selfEfficacy, _peerRelationship, _financialStress, _sleepQuality,
-    ]) {
-      c.dispose();
-    }
+    _pageController.dispose();
+    _gpaController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleEvaluar() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final variables = {
-      'phq9_score': double.parse(_phq9.text),
-      'gad7_score': double.parse(_gad7.text),
-      'sleep_hours': double.parse(_sleepHours.text),
-      'exercise_freq': double.parse(_exerciseFreq.text),
-      'social_activity': double.parse(_socialActivity.text),
-      'online_stress': double.parse(_onlineStress.text),
-      'gpa': double.parse(_gpa.text),
-      'family_support': double.parse(_familySupport.text),
-      'screen_time': double.parse(_screenTime.text),
-      'academic_stress': double.parse(_academicStress.text),
-      'diet_quality': double.parse(_dietQuality.text),
-      'self_efficacy': double.parse(_selfEfficacy.text),
-      'peer_relationship': double.parse(_peerRelationship.text),
-      'financial_stress': double.parse(_financialStress.text),
-      'sleep_quality': double.parse(_sleepQuality.text),
-    };
-
-    final evaluacionVM = context.read<EvaluacionViewModel>();
-    final success = await evaluacionVM.evaluarRiesgo(variables);
-
-    if (success && mounted) {
-      Navigator.pushNamed(context, '/resultado');
+  // Lógica para retroceder de pregunta
+  void _prevPage() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
-  Widget _buildSlider({
-    required String label,
-    required String descripcion,
-    required TextEditingController controller,
-    required double min,
-    required double max,
-    required String unidad,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  // Lógica para avanzar de pregunta o finalizar
+  void _nextPage() {
+    final preguntaActual = _preguntas[_currentPage];
+
+    // Validación especial para la nota promedio (GPA)
+    if (preguntaActual.tipo == 'INPUT_GPA') {
+      if (!_formKey.currentState!.validate()) {
+        return;
+      }
+      _respuestas['gpa'] = double.parse(_gpaController.text);
+    }
+
+    if (_currentPage < _preguntas.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _handleEnviar();
+    }
+  }
+
+  // Guardar datos y consultar API del backend
+  Future<void> _handleEnviar() async {
+    final evaluacionVM = context.read<EvaluacionViewModel>();
+    final success = await evaluacionVM.evaluarRiesgo(_respuestas);
+
+    if (success && mounted) {
+      // Navegamos a la pantalla de resultados y refrescamos el historial
+      Navigator.pushReplacementNamed(context, '/resultado');
+    }
+  }
+
+  // Icono dinámico según la variable a evaluar
+  IconData _getIconForQuestion(String key) {
+    switch (key) {
+      case 'phq9_score':
+        return Icons.sentiment_very_dissatisfied_rounded;
+      case 'gad7_score':
+        return Icons.psychology_rounded;
+      case 'sleep_hours':
+        return Icons.bedtime_rounded;
+      case 'exercise_freq':
+        return Icons.directions_run_rounded;
+      case 'social_activity':
+        return Icons.people_rounded;
+      case 'online_stress':
+        return Icons.language_rounded;
+      case 'gpa':
+        return Icons.school_rounded;
+      case 'family_support':
+        return Icons.home_rounded;
+      case 'screen_time':
+        return Icons.smartphone_rounded;
+      case 'academic_stress':
+        return Icons.menu_book_rounded;
+      case 'diet_quality':
+        return Icons.restaurant_rounded;
+      case 'self_efficacy':
+        return Icons.thumb_up_rounded;
+      case 'peer_relationship':
+        return Icons.groups_rounded;
+      case 'financial_stress':
+        return Icons.attach_money_rounded;
+      case 'sleep_quality':
+        return Icons.nights_stay_rounded;
+      default:
+        return Icons.help_outline_rounded;
+    }
+  }
+
+  // ==========================================
+  // RENDERIZADOR DINÁMICO DE RESPUESTAS
+  // ==========================================
+  Widget _buildAnswerInput(Pregunta pregunta) {
+    switch (pregunta.tipo) {
+      case 'SLIDER':
+        double value = _respuestas[pregunta.key] ?? pregunta.min;
+        return Column(
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (descripcion.isNotEmpty)
-              Text(descripcion, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                SizedBox(
-                  width: 60,
-                  child: TextFormField(
-                    controller: controller,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Req.';
-                      final val = double.tryParse(v);
-                      if (val == null) return 'Núm.';
-                      if (val < min || val > max) return '$min-$max';
-                      return null;
-                    },
-                  ),
+            const SizedBox(height: 20),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: const Color(0xFF6366F1),
+                inactiveTrackColor: const Color(0xFFE2E8F0),
+                thumbColor: const Color(0xFF6366F1),
+                overlayColor: const Color(0xFF6366F1).withOpacity(0.2),
+                valueIndicatorColor: const Color(0xFF6366F1),
+                valueIndicatorTextStyle: const TextStyle(color: Colors.white),
+              ),
+              child: Slider(
+                value: value,
+                min: pregunta.min,
+                max: pregunta.max,
+                divisions: (pregunta.max - pregunta.min).toInt(),
+                label: value.toStringAsFixed(0),
+                onChanged: (newValue) {
+                  setState(() {
+                    _respuestas[pregunta.key] = newValue;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'Seleccionado: ${value.toStringAsFixed(0)} ${pregunta.unidad}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF6366F1),
                 ),
-                const SizedBox(width: 8),
-                Text(unidad, style: const TextStyle(color: Colors.grey)),
-                const Spacer(),
-                Text('$min-$max', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ),
+            ),
+          ],
+        );
+
+      case 'CHIPS_DIAS':
+        double value = _respuestas[pregunta.key] ?? pregunta.min;
+        return Column(
+          children: [
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: List.generate(8, (index) {
+                final double val = index.toDouble();
+                final bool isSelected = value == val;
+                return ChoiceChip(
+                  label: Text(
+                    '$index ${index == 1 ? "día" : "días"}',
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : const Color(0xFF475569),
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFF6366F1),
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: isSelected ? const Color(0xFF6366F1) : Colors.transparent,
+                    ),
+                  ),
+                  onSelected: (bool selected) {
+                    if (selected) {
+                      setState(() {
+                        _respuestas[pregunta.key] = val;
+                      });
+                    }
+                  },
+                );
+              }),
+            ),
+          ],
+        );
+
+      case 'ESCALA_10':
+      case 'ESCALA_0_10':
+        final double currentVal = _respuestas[pregunta.key] ?? (pregunta.min);
+        final int startNum = pregunta.min.toInt();
+        final int endNum = pregunta.max.toInt();
+        final int count = endNum - startNum + 1;
+
+        return Column(
+          children: [
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: List.generate(count, (index) {
+                final double val = (startNum + index).toDouble();
+                final bool isSelected = currentVal == val;
+
+                // Color dinámico de escala (de azul/verde a rojo)
+                Color itemColor = const Color(0xFF6366F1);
+                if (pregunta.key == 'sleep_quality' || pregunta.key == 'social_activity' || pregunta.key == 'family_support' || pregunta.key == 'diet_quality' || pregunta.key == 'self_efficacy' || pregunta.key == 'peer_relationship') {
+                  // Valores más altos son MEJORES (Verde)
+                  if (val <= 3) itemColor = Colors.redAccent;
+                  else if (val <= 6) itemColor = Colors.orangeAccent;
+                  else itemColor = const Color(0xFF10B981);
+                } else {
+                  // Valores más altos son PEORES (Rojo - estresantes)
+                  if (val <= 3) itemColor = const Color(0xFF10B981);
+                  else if (val <= 6) itemColor = Colors.orangeAccent;
+                  else itemColor = Colors.redAccent;
+                }
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _respuestas[pregunta.key] = val;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isSelected ? itemColor : const Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: itemColor.withOpacity(0.4),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                      border: Border.all(
+                        color: isSelected ? itemColor : const Color(0xFFCBD5E1),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        (startNum + index).toString(),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : const Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  pregunta.min == 0 ? '0: Muy bajo' : '1: Muy bajo',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                ),
+                const Text(
+                  '10: Muy alto',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                ),
               ],
             ),
           ],
-        ),
-      ),
-    );
+        );
+
+      case 'INPUT_GPA':
+        return Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 150,
+                child: TextFormField(
+                  controller: _gpaController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '3.0',
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Requerido';
+                    final val = double.tryParse(v);
+                    if (val == null) return 'Inválido';
+                    if (val < 0.0 || val > 5.0) return 'Rango 0.0-5.0';
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Ejemplo en escala de 0.0 a 5.0 (ej. 3.8)',
+                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              ),
+            ],
+          ),
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final double progreso = (_currentPage + 1) / _preguntas.length;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Evaluar Riesgo')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Completa los siguientes indicadores',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Todas las respuestas son anónimas y confidenciales.',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-
-              _buildSlider(
-                label: 'PHQ-9',
-                descripcion: 'Nivel de depresión (0=ninguno, 27=severo)',
-                controller: _phq9, min: 0, max: 27, unidad: '',
-              ),
-              _buildSlider(
-                label: 'GAD-7',
-                descripcion: 'Nivel de ansiedad (0=ninguno, 21=severo)',
-                controller: _gad7, min: 0, max: 21, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Horas de sueño',
-                descripcion: 'Promedio de horas que duermes al día',
-                controller: _sleepHours, min: 3, max: 10, unidad: 'hrs',
-              ),
-              _buildSlider(
-                label: 'Frecuencia de ejercicio',
-                descripcion: 'Días a la semana que haces ejercicio',
-                controller: _exerciseFreq, min: 0, max: 7, unidad: 'días/sem',
-              ),
-              _buildSlider(
-                label: 'Actividad social',
-                descripcion: 'Nivel de interacción social (0=bajo, 10=alto)',
-                controller: _socialActivity, min: 0, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Estrés online',
-                descripcion: 'Estrés por redes/internet (1=bajo, 10=alto)',
-                controller: _onlineStress, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'GPA / Promedio',
-                descripcion: 'Promedio académico',
-                controller: _gpa, min: 0, max: 5, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Apoyo familiar',
-                descripcion: 'Apoyo familiar percibido (1=bajo, 10=alto)',
-                controller: _familySupport, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Tiempo de pantalla',
-                descripcion: 'Horas frente a pantalla al día',
-                controller: _screenTime, min: 1, max: 12, unidad: 'hrs',
-              ),
-              _buildSlider(
-                label: 'Estrés académico',
-                descripcion: 'Estrés por estudios (1=bajo, 10=alto)',
-                controller: _academicStress, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Calidad de alimentación',
-                descripcion: 'Calidad de tu dieta (1=mala, 10=excelente)',
-                controller: _dietQuality, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Autoeficacia',
-                descripcion: 'Confianza en ti mismo (1=baja, 10=alta)',
-                controller: _selfEfficacy, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Relaciones con pares',
-                descripcion: 'Relación con compañeros (1=mala, 10=excelente)',
-                controller: _peerRelationship, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Estrés financiero',
-                descripcion: 'Preocupación económica (1=baja, 10=alta)',
-                controller: _financialStress, min: 1, max: 10, unidad: '',
-              ),
-              _buildSlider(
-                label: 'Calidad del sueño',
-                descripcion: 'Calidad general del sueño (0=mala, 10=excelente)',
-                controller: _sleepQuality, min: 0, max: 10, unidad: '',
-              ),
-
-              const SizedBox(height: 24),
-
-              Consumer<EvaluacionViewModel>(
-                builder: (context, evVM, _) {
-                  if (evVM.error != null) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(evVM.error!), backgroundColor: Colors.red,
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text(
+          'Evaluación de Bienestar',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1E293B),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (_currentPage > 0) {
+              _prevPage();
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ==========================================
+            // BARRA DE PROGRESO SUPERIOR
+            // ==========================================
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progreso,
+                      minHeight: 6,
+                      backgroundColor: const Color(0xFFE2E8F0),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF6366F1),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pregunta ${_currentPage + 1} de 15',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6366F1),
                         ),
-                      );
-                      evVM.clearError();
-                    });
-                  }
+                      ),
+                      Text(
+                        'Progreso: ${(progreso * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-                  return CustomButton(
-                    text: 'Evaluar Riesgo',
-                    isLoading: evVM.isLoading,
-                    onPressed: _handleEvaluar,
+            // ==========================================
+            // CONTENIDO DEL CUESTIONARIO (PAGEVIEW)
+            // ==========================================
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(), // Bloqueamos scroll manual
+                onPageChanged: (pageIndex) {
+                  setState(() {
+                    _currentPage = pageIndex;
+                  });
+                },
+                itemCount: _preguntas.length,
+                itemBuilder: (context, index) {
+                  final pregunta = _preguntas[index];
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    child: Card(
+                      elevation: 4,
+                      shadowColor: Colors.black.withOpacity(0.04),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Icono temático
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEEF2FF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _getIconForQuestion(pregunta.key),
+                                size: 36,
+                                color: const Color(0xFF6366F1),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Título de la variable
+                            Text(
+                              pregunta.titulo,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF94A3B8),
+                                letterSpacing: 1,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Pregunta principal
+                            Text(
+                              pregunta.pregunta,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E293B),
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Descripción explicativa
+                            Text(
+                              pregunta.descripcion,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF64748B),
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+
+                            const Divider(color: Color(0xFFF1F5F9)),
+
+                            // Campo de respuesta interactivo
+                            _buildAnswerInput(pregunta),
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
-              const SizedBox(height: 32),
-            ],
-          ),
+            ),
+
+            // ==========================================
+            // BOTONES DE NAVEGACIÓN INFERIOR
+            // ==========================================
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Consumer<EvaluacionViewModel>(
+                builder: (context, evVM, _) {
+                  return Row(
+                    children: [
+                      // Botón Atrás
+                      Expanded(
+                        child: TextButton(
+                          onPressed: _currentPage == 0 ? null : _prevPage,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            'Atrás',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: _currentPage == 0
+                                  ? const Color(0xFFCBD5E1)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Botón Siguiente / Terminar Test
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: evVM.isLoading ? null : _nextPage,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: evVM.isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      _currentPage == _preguntas.length - 1
+                                          ? 'Terminar Test'
+                                          : 'Siguiente',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      _currentPage == _preguntas.length - 1
+                                          ? Icons.done_all_rounded
+                                          : Icons.arrow_forward_rounded,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

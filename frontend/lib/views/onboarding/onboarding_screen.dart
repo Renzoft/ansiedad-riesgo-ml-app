@@ -28,21 +28,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const List<_OnboardingPage> _pages = [
     _OnboardingPage(
       icon: Icons.psychology,
-      title: 'Understand Your Mental Health',
+      title: 'Comprende tu Salud Mental',
       description:
-          'Get personalized insights into your anxiety levels with AI-powered assessments tailored for university life.',
+          'Obtén análisis personalizados sobre tus niveles de ansiedad con evaluaciones de Inteligencia Artificial adaptadas a la vida universitaria.',
     ),
     _OnboardingPage(
       icon: Icons.analytics_outlined,
-      title: 'AI-Powered Risk Assessment',
+      title: 'Evaluación de Riesgo con IA',
       description:
-          'Our machine learning model analyzes 15 key indicators to provide accurate risk levels and early detection of anxiety.',
+          'Nuestro modelo de Machine Learning analiza 15 indicadores clave para proporcionar niveles de riesgo precisos y detección temprana de la ansiedad.',
     ),
     _OnboardingPage(
       icon: Icons.auto_awesome_outlined,
-      title: 'Personalized Recommendations',
+      title: 'Recomendaciones Personalizadas',
       description:
-          'Receive tailored wellness suggestions and track your progress over time to improve your mental health journey.',
+          'Recibe sugerencias de bienestar a tu medida y realiza un seguimiento de tu progreso a lo largo del tiempo para mejorar tu salud mental.',
     ),
   ];
 
@@ -96,7 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: TextButton(
                   onPressed: _goToLogin,
                   child: const Text(
-                    'Skip',
+                    'Saltar',
                     style: TextStyle(
                       color: Color(0xFF0D9488),
                       fontWeight: FontWeight.w600,
@@ -227,7 +227,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                     child: Text(
-                      _currentPage == _pages.length - 1 ? 'Get Started' : 'Next >',
+                      _currentPage == _pages.length - 1 ? 'Comenzar' : 'Siguiente >',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

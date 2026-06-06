@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // TITLE & SUBTITLE
                     // ==========================================
                     const Text(
-                      'Welcome Back',
+                      'Bienvenido de nuevo',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Sign in to continue your mental health journey',
+                      'Inicia sesión para continuar tu viaje de bienestar',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Email address',
+                        hintText: 'Correo electrónico',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.email_outlined,
@@ -162,10 +162,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email';
+                          return 'Por favor, ingresa tu correo';
                         }
                         if (!value.contains('@')) {
-                          return 'Enter a valid email';
+                          return 'Ingresa un correo válido';
                         }
                         return null;
                       },
@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Password',
+                        hintText: 'Contraseña',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.lock_outlined,
@@ -224,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return 'Por favor, ingresa tu contraseña';
                         }
                         return null;
                       },
@@ -241,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // TODO: implement forgot password
                         },
                         child: const Text(
-                          'Forgot password?',
+                          '¿Olvidaste tu contraseña?',
                           style: TextStyle(
                             color: Color(0xFF6366F1),
                             fontWeight: FontWeight.w600,
@@ -293,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   )
                                 : const Text(
-                                    'Sign In',
+                                    'Iniciar Sesión',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -312,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Don't have an account? ",
+                          "¿No tienes una cuenta? ",
                           style: TextStyle(
                             color: Color(0xFF94A3B8),
                             fontSize: 14,
@@ -328,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           },
                           child: const Text(
-                            'Sign up',
+                            'Regístrate',
                             style: TextStyle(
                               color: Color(0xFF6366F1),
                               fontWeight: FontWeight.w600,

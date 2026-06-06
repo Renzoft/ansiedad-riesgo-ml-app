@@ -18,7 +18,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String? _facultad;
-  final _cicloController = TextEditingController(text: '1');
+  int _ciclo = 1; // Ciclo seleccionado por defecto
 
   @override
   void dispose() {
@@ -26,7 +26,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
     _correoController.dispose();
     _contrasenaController.dispose();
     _confirmarController.dispose();
-    _cicloController.dispose();
     super.dispose();
   }
 
@@ -39,13 +38,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
       correo: _correoController.text.trim(),
       contrasena: _contrasenaController.text,
       facultad: _facultad,
-      ciclo: int.tryParse(_cicloController.text),
+      ciclo: _ciclo,
     );
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Account created successfully! Please sign in.'),
+          content: Text('¡Cuenta creada con éxito! Por favor inicia sesión.'),
           backgroundColor: Color(0xFF6366F1),
         ),
       );
@@ -109,7 +108,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     // TITLE & SUBTITLE
                     // ==========================================
                     const Text(
-                      'Create Account',
+                      'Crear Cuenta',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -118,7 +117,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Start your mental wellness journey today',
+                      'Comienza tu viaje hacia el bienestar mental hoy',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -136,7 +135,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Full name',
+                        hintText: 'Nombre completo',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.person_outline,
@@ -166,7 +165,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your full name';
+                          return 'Por favor, ingresa tu nombre completo';
                         }
                         return null;
                       },
@@ -182,7 +181,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Email address',
+                        hintText: 'Correo electrónico',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.email_outlined,
@@ -212,10 +211,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email';
+                          return 'Por favor, ingresa tu correo';
                         }
                         if (!value.contains('@')) {
-                          return 'Enter a valid email';
+                          return 'Ingresa un correo válido';
                         }
                         return null;
                       },
@@ -231,7 +230,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Password',
+                        hintText: 'Contraseña',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.lock_outlined,
@@ -274,10 +273,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
+                          return 'Por favor, ingresa una contraseña';
                         }
                         if (value.length < 6) {
-                          return 'Minimum 6 characters';
+                          return 'Mínimo 6 caracteres';
                         }
                         return null;
                       },
@@ -293,7 +292,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Confirm password',
+                        hintText: 'Confirmar contraseña',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.lock_outlined,
@@ -336,7 +335,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       ),
                       validator: (value) {
                         if (value != _contrasenaController.text) {
-                          return 'Passwords do not match';
+                          return 'Las contraseñas no coinciden';
                         }
                         return null;
                       },
@@ -402,13 +401,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     // ==========================================
                     // CICLO FIELD
                     // ==========================================
-                    TextFormField(
-                      controller: _cicloController,
-                      keyboardType: TextInputType.number,
+                    DropdownButtonFormField<int>(
+                      value: _ciclo,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Ciclo (opcional)',
+                        hintText: 'Ciclo académico',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(
                           Icons.calendar_today_outlined,
@@ -436,14 +434,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
                           vertical: 18,
                         ),
                       ),
-                      validator: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          final num = int.tryParse(value);
-                          if (num == null || num < 1 || num > 12) {
-                            return 'Enter a valid cycle (1-12)';
-                          }
-                        }
-                        return null;
+                      items: List.generate(12, (index) {
+                        final c = index + 1;
+                        return DropdownMenuItem<int>(
+                          value: c,
+                          child: Text('Ciclo $c'),
+                        );
+                      }),
+                      onChanged: (value) {
+                        setState(() {
+                          if (value != null) _ciclo = value;
+                        });
                       },
                     ),
                     const SizedBox(height: 24),
@@ -489,7 +490,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                                     ),
                                   )
                                 : const Text(
-                                    'Create Account',
+                                    'Crear Cuenta',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -508,7 +509,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Already have an account? ",
+                          "¿Ya tienes una cuenta? ",
                           style: TextStyle(
                             color: Color(0xFF94A3B8),
                             fontSize: 14,
@@ -519,7 +520,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                             Navigator.pop(context);
                           },
                           child: const Text(
-                            'Sign in',
+                            'Inicia sesión',
                             style: TextStyle(
                               color: Color(0xFF6366F1),
                               fontWeight: FontWeight.w600,
