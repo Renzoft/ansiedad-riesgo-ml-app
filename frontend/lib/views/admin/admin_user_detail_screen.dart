@@ -105,12 +105,18 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
   }
 
   Future<void> _eliminarUsuario() async {
+    final rol = _usuario?['rol'] ?? 'Estudiante';
+    final esEstudiante = rol == 'Estudiante';
     final nombre = _usuario?['nombre'] ?? 'este usuario';
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Usuario'),
-        content: Text('¿Estás seguro de eliminar a "$nombre"?\n\nSe eliminarán también todas sus evaluaciones y datos asociados.'),
+        content: Text(
+          esEstudiante
+              ? '¿Estás seguro de eliminar a "$nombre"?\n\nSe eliminarán también todas sus evaluaciones y datos asociados.'
+              : '¿Estás seguro de eliminar a "$nombre"?',
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           TextButton(
@@ -147,6 +153,8 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final rol = _usuario?['rol'] ?? 'Estudiante';
+    final esEstudiante = rol == 'Estudiante';
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -183,8 +191,10 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildUserInfoCard(colors),
-                        const SizedBox(height: 20),
-                        _buildEvaluacionesSection(colors),
+                        if (esEstudiante) ...[
+                          const SizedBox(height: 20),
+                          _buildEvaluacionesSection(colors),
+                        ],
                       ],
                     ),
                   ),
@@ -220,8 +230,13 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
   Widget _buildUserInfoCard(AppColors colors) {
     final u = _usuario!;
     final rol = u['rol'] ?? 'Estudiante';
-    final evaluaciones = u['evaluaciones'] as List<dynamic>? ?? [];
-    final totalEvals = u['total_evaluaciones'] ?? evaluaciones.length;
+    final esEstudiante = rol == 'Estudiante';
+    final evaluaciones = esEstudiante
+        ? (u['evaluaciones'] as List<dynamic>? ?? [])
+        : [];
+    final totalEvals = esEstudiante
+        ? (u['total_evaluaciones'] ?? evaluaciones.length)
+        : 0;
 
     return Container(
       width: double.infinity,
@@ -277,10 +292,22 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
           const SizedBox(height: 16),
           // Datos
           _buildInfoRow(colors, PhosphorIcons.envelope(), 'Correo', u['correo'] ?? ''),
-          if (u['facultad'] != null && (u['facultad'] as String).isNotEmpty)
-            _buildInfoRow(colors, PhosphorIcons.building(), 'Facultad', u['facultad']),
-          if (u['ciclo'] != null)
-            _buildInfoRow(colors, PhosphorIcons.hash(), 'Ciclo', u['ciclo'].toString()),
+          if (esEstudiante &&
+              u['facultad'] != null &&
+              (u['facultad'] as String).isNotEmpty)
+            _buildInfoRow(
+              colors,
+              PhosphorIcons.building(),
+              'Facultad',
+              u['facultad'],
+            ),
+          if (esEstudiante && u['ciclo'] != null)
+            _buildInfoRow(
+              colors,
+              PhosphorIcons.hash(),
+              'Ciclo',
+              u['ciclo'].toString(),
+            ),
           if (u['fecha_registro'] != null)
             _buildInfoRow(
               colors,
@@ -290,32 +317,33 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
             ),
           const SizedBox(height: 12),
           // Contador de evaluaciones
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.primaryLight.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PhosphorIcon(
-                  PhosphorIcons.clipboardText(),
-                  size: 18,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '$totalEvals ${totalEvals == 1 ? 'evaluación' : 'evaluaciones'} realizadas',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          if (esEstudiante)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.primaryLight.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PhosphorIcon(
+                    PhosphorIcons.clipboardText(),
+                    size: 18,
                     color: colors.primary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    '$totalEvals ${totalEvals == 1 ? 'evaluación' : 'evaluaciones'} realizadas',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: colors.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
