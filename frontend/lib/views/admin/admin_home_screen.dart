@@ -24,11 +24,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   List<dynamic> _usuarios = [];
   bool _isLoadingStats = true;
   bool _isLoadingUsers = true;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _cargarDatos();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _cargarDatos() async {
@@ -110,6 +117,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final fechaStr = '${now.day} de ${_mes(now.month)}';
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,6 +372,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final distribucion = _estadisticas?['distribucion_riesgo'] as Map<String, dynamic>?;
     final usuariosPorRol = _estadisticas?['usuarios_por_rol'] as Map<String, dynamic>?;
 
+    final bajo = distribucion?['bajo'] ?? 0;
+    final medio = distribucion?['medio'] ?? 0;
+    final alto = distribucion?['alto'] ?? 0;
+    final totalRiesgo = bajo + medio + alto;
+
+    final estudiantes = usuariosPorRol?['estudiantes'] ?? 0;
+    final medicos = usuariosPorRol?['medicos'] ?? 0;
+    final admins = usuariosPorRol?['admins'] ?? 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -405,20 +422,47 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    AnimatedDonutChart(
-                      data: {
-                        'bajo': distribucion?['bajo'] ?? 0,
-                        'medio': distribucion?['medio'] ?? 0,
-                        'alto': distribucion?['alto'] ?? 0,
-                      },
-                      colors: const {
-                        'bajo': Color(0xFF10B981),
-                        'medio': Color(0xFFF59E0B),
-                        'alto': Color(0xFFEF4444),
-                      },
-                      size: 150,
-                      strokeWidth: 24,
-                    ),
+                    // Mostrar donut o estado vacío
+                    if (totalRiesgo > 0)
+                      AnimatedDonutChart(
+                        data: {
+                          'bajo': bajo,
+                          'medio': medio,
+                          'alto': alto,
+                        },
+                        colors: const {
+                          'bajo': Color(0xFF10B981),
+                          'medio': Color(0xFFF59E0B),
+                          'alto': Color(0xFFEF4444),
+                        },
+                        size: 150,
+                        strokeWidth: 24,
+                      )
+                    else
+                      SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PhosphorIcon(
+                                PhosphorIcons.chartPieSlice(),
+                                size: 40,
+                                color: colors.iconMuted,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Sin datos',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     _buildLegend(colors, distribucion),
                   ],
@@ -452,23 +496,46 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    AnimatedBarChart(
-                      data: {
-                        'estudiantes': usuariosPorRol?['estudiantes'] ?? 0,
-                        'medicos': usuariosPorRol?['medicos'] ?? 0,
-                        'admins': usuariosPorRol?['admins'] ?? 0,
-                      },
-                      colors: const {
-                        'estudiantes': Color(0xFF3B82F6),
-                        'medicos': Color(0xFFF59E0B),
-                        'admins': Color(0xFF6366F1),
-                      },
-                      labels: const {
-                        'estudiantes': 'Estudiantes',
-                        'medicos': 'Médicos',
-                        'admins': 'Admins',
-                      },
-                    ),
+                    // Mostrar barras o estado vacío
+                    if (estudiantes + medicos + admins > 0)
+                      AnimatedBarChart(
+                        data: {
+                          'estudiantes': estudiantes,
+                          'medicos': medicos,
+                          'admins': admins,
+                        },
+                        colors: const {
+                          'estudiantes': Color(0xFF3B82F6),
+                          'medicos': Color(0xFFF59E0B),
+                          'admins': Color(0xFF6366F1),
+                        },
+                        labels: const {
+                          'estudiantes': 'Estudiantes',
+                          'medicos': 'Médicos',
+                          'admins': 'Admins',
+                        },
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        child: Column(
+                          children: [
+                            PhosphorIcon(
+                              PhosphorIcons.chartBar(),
+                              size: 40,
+                              color: colors.iconMuted,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Sin datos',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -486,10 +553,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       {'label': 'Alto', 'color': const Color(0xFFEF4444), 'value': distribucion?['alto'] ?? 0},
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Wrap(
+      spacing: 12,
+      runSpacing: 6,
+      alignment: WrapAlignment.center,
       children: items.map((item) {
         return Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 10,
@@ -544,15 +614,19 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               icon: PhosphorIcons.chartBar(),
               color: const Color(0xFF059669),
               label: 'Ver\nReportes',
-              onTap: () {},
+              onTap: () {
+                setState(() => _currentNavIndex = 1);
+              },
             ),
             const SizedBox(width: 12),
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.gearSix(),
+              icon: PhosphorIcons.userGear(),
               color: const Color(0xFFF59E0B),
-              label: 'Config-\nuración',
-              onTap: () {},
+              label: 'Mi\nPerfil',
+              onTap: () {
+                Navigator.pushNamed(context, '/perfil');
+              },
             ),
           ],
         ),
@@ -983,7 +1057,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 colors: colors,
                 index: 0,
                 icon: AppIcons.dashboardFill,
-                label: 'Dashboard',
+                label: 'Inicio',
               ),
               _buildNavItem(
                 colors: colors,
@@ -1020,6 +1094,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         setState(() {
           _currentNavIndex = index;
         });
+        // Si ya estamos en Dashboard, hacer scroll al inicio
+        if (index == 0 && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),

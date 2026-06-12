@@ -55,13 +55,14 @@ class _AnimatedBarChartState extends State<AnimatedBarChart>
               child: Row(
                 children: [
                   SizedBox(
-                    width: 80,
+                    width: 60,
                     child: Text(
                       widget.labels[entry.key] ?? entry.key,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Expanded(
@@ -95,12 +96,12 @@ class _AnimatedBarChartState extends State<AnimatedBarChart>
                   ),
                   const SizedBox(width: 12),
                   SizedBox(
-                    width: 36,
+                    width: 30,
                     child: Text(
                       '${entry.value}',
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: widget.colors[entry.key],
                       ),
