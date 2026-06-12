@@ -6,6 +6,9 @@ import '../../constants/app_colors.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../services/api_service.dart';
 import '../../config/api_config.dart';
+import '../../widgets/animated_counter.dart';
+import '../../widgets/animated_donut_chart.dart';
+import '../../widgets/animated_bar_chart.dart';
 
 /// Dashboard principal para el rol Admin
 class AdminHomeScreen extends StatefulWidget {
@@ -21,7 +24,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   List<dynamic> _usuarios = [];
   bool _isLoadingStats = true;
   bool _isLoadingUsers = true;
-  String? _error;
 
   @override
   void initState() {
@@ -48,7 +50,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Error al cargar estadísticas';
         _isLoadingStats = false;
       });
     }
@@ -66,7 +67,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Error al cargar usuarios';
         _isLoadingUsers = false;
       });
     }
@@ -103,17 +103,651 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   // ──────────────────── VISTA DASHBOARD ────────────────────
   Widget _buildDashboardView(AppColors colors) {
+    final authVM = context.read<AuthViewModel>();
+    final now = DateTime.now();
+    final hour = now.hour;
+    final greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
+    final fechaStr = '${now.day} de ${_mes(now.month)}';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(colors),
-          const SizedBox(height: 20),
-          _buildStatsGrid(colors),
-          const SizedBox(height: 16),
+          // ── HEADER CON GRADIENTE ──
+          FadeInSlide(
+            delay: const Duration(milliseconds: 100),
+            child: _buildGradientHeader(colors, authVM, greeting, fechaStr),
+          ),
+          const SizedBox(height: 24),
+
+          // ── ESTADÍSTICAS CON ANIMACIÓN ──
+          FadeInSlide(
+            delay: const Duration(milliseconds: 300),
+            child: _buildStatsGrid(colors),
+          ),
+          const SizedBox(height: 24),
+
+          // ── GRÁFICOS ──
+          if (!_isLoadingStats && _estadisticas != null) ...[
+            FadeInSlide(
+              delay: const Duration(milliseconds: 500),
+              child: _buildChartsSection(colors),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // ── ACCIONES RÁPIDAS ──
+          FadeInSlide(
+            delay: const Duration(milliseconds: 700),
+            child: _buildQuickActions(colors),
+          ),
+          const SizedBox(height: 24),
+
+          // ── ACTIVIDAD RECIENTE ──
+          FadeInSlide(
+            delay: const Duration(milliseconds: 900),
+            child: _buildRecentActivity(colors),
+          ),
         ],
       ),
+    );
+  }
+
+  // ──────────────────── HEADER CON GRADIENTE ────────────────────
+  Widget _buildGradientHeader(AppColors colors, AuthViewModel authVM, String greeting, String fechaStr) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary,
+            colors.primary.withValues(alpha: 0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, ${authVM.nombre ?? "Admin"} 👋',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  fechaStr,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Panel de administración del sistema',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.65),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const PhosphorIcon(
+              PhosphorIconsFill.chartLineUp,
+              size: 28,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────── ESTADÍSTICAS ────────────────────
+  Widget _buildStatsGrid(AppColors colors) {
+    if (_isLoadingStats) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: CircularProgressIndicator(color: colors.primary),
+        ),
+      );
+    }
+
+    final stats = _estadisticas;
+    final totalUsuarios = stats?['total_usuarios'] ?? 0;
+    final totalEvals = stats?['total_evaluaciones'] ?? 0;
+    final usuariosPorRol = stats?['usuarios_por_rol'] as Map<String, dynamic>?;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Resumen General',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            _buildStatCard(
+              colors: colors,
+              icon: PhosphorIcons.usersThree(),
+              accentColor: const Color(0xFF6366F1),
+              label: 'Usuarios',
+              value: totalUsuarios,
+            ),
+            const SizedBox(width: 12),
+            _buildStatCard(
+              colors: colors,
+              icon: PhosphorIcons.clipboardText(),
+              accentColor: const Color(0xFF059669),
+              label: 'Evaluaciones',
+              value: totalEvals,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildStatCard(
+              colors: colors,
+              icon: PhosphorIcons.graduationCap(),
+              accentColor: const Color(0xFF3B82F6),
+              label: 'Estudiantes',
+              value: usuariosPorRol?['estudiantes'] ?? 0,
+            ),
+            const SizedBox(width: 12),
+            _buildStatCard(
+              colors: colors,
+              icon: PhosphorIcons.stethoscope(),
+              accentColor: const Color(0xFFF59E0B),
+              label: 'Médicos',
+              value: usuariosPorRol?['medicos'] ?? 0,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required AppColors colors,
+    required IconData icon,
+    required Color accentColor,
+    required String label,
+    required int value,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow,
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: PhosphorIcon(icon, size: 22, color: accentColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnimatedCounter(
+                    end: value,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────── SECCIÓN DE GRÁFICOS ────────────────────
+  Widget _buildChartsSection(AppColors colors) {
+    final distribucion = _estadisticas?['distribucion_riesgo'] as Map<String, dynamic>?;
+    final usuariosPorRol = _estadisticas?['usuarios_por_rol'] as Map<String, dynamic>?;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Análisis Visual',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Donut chart de distribución de riesgo
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow,
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Distribución de Riesgo',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AnimatedDonutChart(
+                      data: {
+                        'bajo': distribucion?['bajo'] ?? 0,
+                        'medio': distribucion?['medio'] ?? 0,
+                        'alto': distribucion?['alto'] ?? 0,
+                      },
+                      colors: const {
+                        'bajo': Color(0xFF10B981),
+                        'medio': Color(0xFFF59E0B),
+                        'alto': Color(0xFFEF4444),
+                      },
+                      size: 150,
+                      strokeWidth: 24,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildLegend(colors, distribucion),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Bar chart de usuarios por rol
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow,
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Usuarios por Rol',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    AnimatedBarChart(
+                      data: {
+                        'estudiantes': usuariosPorRol?['estudiantes'] ?? 0,
+                        'medicos': usuariosPorRol?['medicos'] ?? 0,
+                        'admins': usuariosPorRol?['admins'] ?? 0,
+                      },
+                      colors: const {
+                        'estudiantes': Color(0xFF3B82F6),
+                        'medicos': Color(0xFFF59E0B),
+                        'admins': Color(0xFF6366F1),
+                      },
+                      labels: const {
+                        'estudiantes': 'Estudiantes',
+                        'medicos': 'Médicos',
+                        'admins': 'Admins',
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegend(AppColors colors, Map<String, dynamic>? distribucion) {
+    final items = [
+      {'label': 'Bajo', 'color': const Color(0xFF10B981), 'value': distribucion?['bajo'] ?? 0},
+      {'label': 'Medio', 'color': const Color(0xFFF59E0B), 'value': distribucion?['medio'] ?? 0},
+      {'label': 'Alto', 'color': const Color(0xFFEF4444), 'value': distribucion?['alto'] ?? 0},
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: items.map((item) {
+        return Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: item['color'] as Color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '${item['label']} (${item['value']})',
+              style: TextStyle(
+                fontSize: 11,
+                color: colors.textSecondary,
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  // ──────────────────── ACCIONES RÁPIDAS ────────────────────
+  Widget _buildQuickActions(AppColors colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Acciones Rápidas',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            _buildActionCard(
+              colors: colors,
+              icon: PhosphorIcons.users(),
+              color: const Color(0xFF3B82F6),
+              label: 'Gestionar\nUsuarios',
+              onTap: () {
+                setState(() => _currentNavIndex = 1);
+              },
+            ),
+            const SizedBox(width: 12),
+            _buildActionCard(
+              colors: colors,
+              icon: PhosphorIcons.chartBar(),
+              color: const Color(0xFF059669),
+              label: 'Ver\nReportes',
+              onTap: () {},
+            ),
+            const SizedBox(width: 12),
+            _buildActionCard(
+              colors: colors,
+              icon: PhosphorIcons.gearSix(),
+              color: const Color(0xFFF59E0B),
+              label: 'Config-\nuración',
+              onTap: () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionCard({
+    required AppColors colors,
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow,
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: PhosphorIcon(icon, size: 24, color: color),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────── ACTIVIDAD RECIENTE ────────────────────
+  Widget _buildRecentActivity(AppColors colors) {
+    final ultimosUsuarios = _usuarios.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Usuarios Recientes',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (ultimosUsuarios.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                PhosphorIcon(
+                  PhosphorIcons.userPlus(),
+                  size: 40,
+                  color: colors.iconMuted,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No hay usuarios registrados',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...ultimosUsuarios.asMap().entries.map((entry) {
+            final index = entry.key;
+            final usuario = entry.value;
+            final rol = usuario['rol'] ?? 'Estudiante';
+            final nombre = usuario['nombre'] ?? '';
+            final correo = usuario['correo'] ?? '';
+            final fechaReg = usuario['fecha_registro'] as String?;
+
+            return FadeInSlide(
+              delay: Duration(milliseconds: 1000 + index * 100),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow,
+                      blurRadius: 8,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: _getRolColor(rol).withValues(alpha: 0.15),
+                      child: PhosphorIcon(
+                        _getRolIcon(rol),
+                        size: 20,
+                        color: _getRolColor(rol),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            nombre,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            correo,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getRolColor(rol).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            rol,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _getRolColor(rol),
+                            ),
+                          ),
+                        ),
+                        if (fechaReg != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatFechaCorta(fechaReg),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
     );
   }
 
@@ -165,214 +799,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  Widget _buildHeader(AppColors colors) {
-    final authVM = context.read<AuthViewModel>();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                PhosphorIcon(
-                  AppIcons.dashboardFill,
-                  size: 26,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Admin Dashboard',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Bienvenido, ${authVM.nombre ?? "Admin"}',
-              style: TextStyle(
-                fontSize: 14,
-                color: colors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: PhosphorIcon(
-              AppIcons.signOutIcon,
-              color: colors.iconMuted,
-            ),
-            onPressed: () {
-              authVM.logout();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsGrid(AppColors colors) {
-    if (_isLoadingStats) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final stats = _estadisticas;
-    final usuariosPorRol = stats?['usuarios_por_rol'] as Map<String, dynamic>?;
-    final distribucion = stats?['distribucion_riesgo'] as Map<String, dynamic>?;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Estadísticas del Sistema',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            _buildStatCard(
-              colors: colors,
-              icon: AppIcons.usersThree,
-              accentColor: const Color(0xFF6366F1),
-              bgColor: const Color(0xFFEEF2FF),
-              label: 'Usuarios',
-              value: '${stats?['total_usuarios'] ?? 0}',
-            ),
-            const SizedBox(width: 12),
-            _buildStatCard(
-              colors: colors,
-              icon: AppIcons.clipboardTextFill,
-              accentColor: const Color(0xFF059669),
-              bgColor: const Color(0xFFECFDF5),
-              label: 'Evaluaciones',
-              value: '${stats?['total_evaluaciones'] ?? 0}',
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _buildStatCard(
-              colors: colors,
-              icon: AppIcons.student,
-              accentColor: const Color(0xFF3B82F6),
-              bgColor: const Color(0xFFDBEAFE),
-              label: 'Estudiantes',
-              value: '${usuariosPorRol?['estudiantes'] ?? 0}',
-            ),
-            const SizedBox(width: 12),
-            _buildStatCard(
-              colors: colors,
-              icon: AppIcons.firstAidFill,
-              accentColor: const Color(0xFFF59E0B),
-              bgColor: const Color(0xFFFEF3C7),
-              label: 'Médicos',
-              value: '${usuariosPorRol?['medicos'] ?? 0}',
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _buildStatCard(
-              colors: colors,
-              icon: AppIcons.smileyFill,
-              accentColor: const Color(0xFF059669),
-              bgColor: const Color(0xFFECFDF5),
-              label: 'Riesgo Bajo',
-              value: '${distribucion?['bajo'] ?? 0}',
-            ),
-            const SizedBox(width: 12),
-            _buildStatCard(
-              colors: colors,
-              icon: AppIcons.warningFill,
-              accentColor: const Color(0xFFF59E0B),
-              bgColor: const Color(0xFFFEF3C7),
-              label: 'Riesgo Medio',
-              value: '${distribucion?['medio'] ?? 0}',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required AppColors colors,
-    required IconData icon,
-    required Color accentColor,
-    required Color bgColor,
-    required String label,
-    required String value,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: colors.shadow,
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: PhosphorIcon(icon, size: 22, color: accentColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildUsersList(AppColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -380,7 +806,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_isLoadingUsers)
-            const Center(child: CircularProgressIndicator())
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40),
+                child: CircularProgressIndicator(color: colors.primary),
+              ),
+            )
           else if (_usuarios.isEmpty)
             Container(
               width: double.infinity,
@@ -415,69 +846,72 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 itemBuilder: (context, index) {
                   final usuario = _usuarios[index];
                   final rol = usuario['rol'] ?? 'Estudiante';
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.shadow,
-                          blurRadius: 8,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: _getRolColor(rol).withValues(alpha: 0.15),
-                          child: PhosphorIcon(
-                            _getRolIcon(rol),
-                            size: 20,
-                            color: _getRolColor(rol),
+                  return FadeInSlide(
+                    delay: Duration(milliseconds: index * 80),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: colors.card,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.shadow,
+                            blurRadius: 8,
+                            offset: const Offset(0, 1),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                usuario['nombre'] ?? '',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                usuario['correo'] ?? '',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getRolColor(rol).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            rol,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: _getRolColor(rol).withValues(alpha: 0.15),
+                            child: PhosphorIcon(
+                              _getRolIcon(rol),
+                              size: 20,
                               color: _getRolColor(rol),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  usuario['nombre'] ?? '',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  usuario['correo'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getRolColor(rol).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              rol,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _getRolColor(rol),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -502,14 +936,30 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   IconData _getRolIcon(String rol) {
     switch (rol) {
       case 'Admin':
-        return AppIcons.shieldCheckFill;
+        return PhosphorIcons.shieldCheck();
       case 'Medico':
-        return AppIcons.firstAidFill;
+        return PhosphorIcons.stethoscope();
       default:
-        return AppIcons.student;
+        return PhosphorIcons.graduationCap();
     }
   }
 
+  String _mes(int month) {
+    const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return meses[month];
+  }
+
+  String _formatFechaCorta(String dateStr) {
+    try {
+      final dt = DateTime.parse(dateStr).toLocal();
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr;
+    }
+  }
+
+  // ──────────────────── BOTTOM NAV ────────────────────
   Widget _buildBottomNav(AppColors colors) {
     return Container(
       decoration: BoxDecoration(
@@ -571,7 +1021,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           _currentNavIndex = index;
         });
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: isActive
             ? BoxDecoration(

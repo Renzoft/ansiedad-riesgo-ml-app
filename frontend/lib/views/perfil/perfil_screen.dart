@@ -160,23 +160,25 @@ class PerfilScreen extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Info cards
-                _buildInfoCard(
-                  colors: colors,
-                  icon: AppIcons.student,
-                  label: 'Facultad',
-                  value: facultad ?? 'No especificada',
-                ),
-                if (ciclo != null) ...[
-                  const SizedBox(height: 12),
+                // Info cards - solo mostrar facultad/ciclo para Estudiantes
+                if (rol == 'Estudiante') ...[
                   _buildInfoCard(
                     colors: colors,
-                    icon: PhosphorIcons.calendar(),
-                    label: 'Ciclo',
-                    value: '$ciclo',
+                    icon: AppIcons.student,
+                    label: 'Facultad',
+                    value: facultad ?? 'No especificada',
                   ),
+                  if (ciclo != null) ...[
+                    const SizedBox(height: 12),
+                    _buildInfoCard(
+                      colors: colors,
+                      icon: PhosphorIcons.calendar(),
+                      label: 'Ciclo',
+                      value: '$ciclo',
+                    ),
+                  ],
+                  const SizedBox(height: 12),
                 ],
-                const SizedBox(height: 12),
                 _buildInfoCard(
                   colors: colors,
                   icon: PhosphorIcons.envelope(),
