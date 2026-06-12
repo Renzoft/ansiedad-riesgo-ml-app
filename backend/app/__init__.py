@@ -18,6 +18,7 @@ from app.models.recomendacion import Recomendacion, resultado_recomendaciones
 
 from app.routes.evaluaciones_routes import evaluaciones_bp  # Rutas de evaluaciones
 from app.routes.admin_routes import admin_bp  # Rutas administrativas
+from app.routes.medico_routes import medico_bp  # Rutas para médicos
 
 migrate = Migrate()  # Manejo de migraciones
 jwt = JWTManager()  # Manejo de JWT(JSON Web Tokens)
@@ -56,6 +57,7 @@ def crear_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(evaluaciones_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(medico_bp)
 
     # ==========================================
     # COMANDOS CLI
