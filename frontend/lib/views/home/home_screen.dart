@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
 import '../../viewmodels/evaluacion_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../models/evaluacion.dart';
@@ -46,8 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final historial = evaluacionVM.historial;
     final tieneHistorial = historial.isNotEmpty;
 
+    final colors = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -57,14 +60,14 @@ class _HomeScreenState extends State<HomeScreen> {
             // ==========================================
             Expanded(
               child: evaluacionVM.isLoading && historial.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6366F1),
+                        color: colors.primary,
                       ),
                     )
                   : RefreshIndicator(
                       onRefresh: () => evaluacionVM.obtenerHistorial(),
-                      color: const Color(0xFF6366F1),
+                      color: colors.primary,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),

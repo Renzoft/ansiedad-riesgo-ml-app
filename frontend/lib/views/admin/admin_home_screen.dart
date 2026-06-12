@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_icons.dart';
+import '../../constants/app_colors.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../services/api_service.dart';
 import '../../config/api_config.dart';
@@ -73,43 +74,43 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            Expanded(
-              child: _buildCurrentView(),
-            ),
-            _buildBottomNav(),
+            Expanded(child: _buildCurrentView(colors)),
+            _buildBottomNav(colors),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCurrentView() {
+  Widget _buildCurrentView(AppColors colors) {
     switch (_currentNavIndex) {
       case 0:
-        return _buildDashboardView();
+        return _buildDashboardView(colors);
       case 1:
-        return _buildUsuariosView();
+        return _buildUsuariosView(colors);
       default:
-        return _buildDashboardView();
+        return _buildDashboardView(colors);
     }
   }
 
   // ──────────────────── VISTA DASHBOARD ────────────────────
-  Widget _buildDashboardView() {
+  Widget _buildDashboardView(AppColors colors) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(colors),
           const SizedBox(height: 20),
-          _buildStatsGrid(),
+          _buildStatsGrid(colors),
           const SizedBox(height: 16),
         ],
       ),
@@ -117,7 +118,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   // ──────────────────── VISTA USUARIOS ────────────────────
-  Widget _buildUsuariosView() {
+  Widget _buildUsuariosView(AppColors colors) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -128,30 +129,30 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               PhosphorIcon(
                 AppIcons.usersFill,
                 size: 26,
-                color: const Color(0xFF6366F1),
+                color: colors.primary,
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Usuarios',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+                  color: colors.textPrimary,
                 ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
+                  color: colors.primaryLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${_usuarios.length} total',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF6366F1),
+                    color: colors.primary,
                   ),
                 ),
               ),
@@ -159,12 +160,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Expanded(child: _buildUsersList()),
+        Expanded(child: _buildUsersList(colors)),
       ],
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppColors colors) {
     final authVM = context.read<AuthViewModel>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -177,15 +178,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 PhosphorIcon(
                   AppIcons.dashboardFill,
                   size: 26,
-                  color: const Color(0xFF6366F1),
+                  color: colors.primary,
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   'Admin Dashboard',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: colors.textPrimary,
                   ),
                 ),
               ],
@@ -193,22 +194,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             const SizedBox(height: 4),
             Text(
               'Bienvenido, ${authVM.nombre ?? "Admin"}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF94A3B8),
+                color: colors.textSecondary,
               ),
             ),
           ],
         ),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
             icon: PhosphorIcon(
               AppIcons.signOutIcon,
-              color: const Color(0xFF94A3B8),
+              color: colors.iconMuted,
             ),
             onPressed: () {
               authVM.logout();
@@ -220,7 +221,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(AppColors colors) {
     if (_isLoadingStats) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -232,28 +233,30 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Estadísticas del Sistema',
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 14),
         Row(
           children: [
             _buildStatCard(
+              colors: colors,
               icon: AppIcons.usersThree,
-              color: const Color(0xFF6366F1),
+              accentColor: const Color(0xFF6366F1),
               bgColor: const Color(0xFFEEF2FF),
               label: 'Usuarios',
               value: '${stats?['total_usuarios'] ?? 0}',
             ),
             const SizedBox(width: 12),
             _buildStatCard(
+              colors: colors,
               icon: AppIcons.clipboardTextFill,
-              color: const Color(0xFF059669),
+              accentColor: const Color(0xFF059669),
               bgColor: const Color(0xFFECFDF5),
               label: 'Evaluaciones',
               value: '${stats?['total_evaluaciones'] ?? 0}',
@@ -264,16 +267,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         Row(
           children: [
             _buildStatCard(
+              colors: colors,
               icon: AppIcons.student,
-              color: const Color(0xFF3B82F6),
+              accentColor: const Color(0xFF3B82F6),
               bgColor: const Color(0xFFDBEAFE),
               label: 'Estudiantes',
               value: '${usuariosPorRol?['estudiantes'] ?? 0}',
             ),
             const SizedBox(width: 12),
             _buildStatCard(
+              colors: colors,
               icon: AppIcons.firstAidFill,
-              color: const Color(0xFFF59E0B),
+              accentColor: const Color(0xFFF59E0B),
               bgColor: const Color(0xFFFEF3C7),
               label: 'Médicos',
               value: '${usuariosPorRol?['medicos'] ?? 0}',
@@ -284,16 +289,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         Row(
           children: [
             _buildStatCard(
+              colors: colors,
               icon: AppIcons.smileyFill,
-              color: const Color(0xFF059669),
+              accentColor: const Color(0xFF059669),
               bgColor: const Color(0xFFECFDF5),
               label: 'Riesgo Bajo',
               value: '${distribucion?['bajo'] ?? 0}',
             ),
             const SizedBox(width: 12),
             _buildStatCard(
+              colors: colors,
               icon: AppIcons.warningFill,
-              color: const Color(0xFFF59E0B),
+              accentColor: const Color(0xFFF59E0B),
               bgColor: const Color(0xFFFEF3C7),
               label: 'Riesgo Medio',
               value: '${distribucion?['medio'] ?? 0}',
@@ -305,8 +312,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   Widget _buildStatCard({
+    required AppColors colors,
     required IconData icon,
-    required Color color,
+    required Color accentColor,
     required Color bgColor,
     required String label,
     required String value,
@@ -315,11 +323,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: colors.shadow,
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -334,7 +342,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 color: bgColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: PhosphorIcon(icon, size: 22, color: color),
+              child: PhosphorIcon(icon, size: 22, color: accentColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -343,17 +351,17 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 children: [
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
+                      color: colors.textPrimary,
                     ),
                   ),
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF94A3B8),
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -365,7 +373,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  Widget _buildUsersList() {
+  Widget _buildUsersList(AppColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -378,7 +386,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(40),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.card,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -386,14 +394,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   PhosphorIcon(
                     AppIcons.usersIcon,
                     size: 56,
-                    color: const Color(0xFFCBD5E1),
+                    color: colors.iconMuted,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'No hay usuarios registrados',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Color(0xFF94A3B8),
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -411,11 +419,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.card,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
+                          color: colors.shadow,
                           blurRadius: 8,
                           offset: const Offset(0, 1),
                         ),
@@ -439,16 +447,16 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                             children: [
                               Text(
                                 usuario['nombre'] ?? '',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1E293B),
+                                  color: colors.textPrimary,
                                 ),
                               ),
                               Text(
                                 usuario['correo'] ?? '',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF94A3B8),
+                                  color: colors.textSecondary,
                                 ),
                               ),
                             ],
@@ -502,13 +510,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     }
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(AppColors colors) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: colors.shadow,
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -522,16 +530,19 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(
+                colors: colors,
                 index: 0,
                 icon: AppIcons.dashboardFill,
                 label: 'Dashboard',
               ),
               _buildNavItem(
+                colors: colors,
                 index: 1,
                 icon: AppIcons.usersFill,
                 label: 'Usuarios',
               ),
               _buildNavItem(
+                colors: colors,
                 index: 2,
                 icon: AppIcons.profileFill,
                 label: 'Perfil',
@@ -544,6 +555,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   Widget _buildNavItem({
+    required AppColors colors,
     required int index,
     required IconData icon,
     required String label,
@@ -563,7 +575,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: isActive
             ? BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: colors.navActiveBg,
                 borderRadius: BorderRadius.circular(12),
               )
             : null,
@@ -573,7 +585,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             PhosphorIcon(
               icon,
               size: 24,
-              color: isActive ? const Color(0xFF6366F1) : const Color(0xFF94A3B8),
+              color: isActive ? colors.primary : colors.iconMuted,
             ),
             const SizedBox(height: 4),
             Text(
@@ -581,7 +593,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                color: isActive ? const Color(0xFF6366F1) : const Color(0xFF94A3B8),
+                color: isActive ? colors.primary : colors.iconMuted,
               ),
             ),
           ],

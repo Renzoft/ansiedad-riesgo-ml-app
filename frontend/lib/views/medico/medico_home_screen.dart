@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 
 /// Dashboard principal para el rol Médico
@@ -15,8 +16,10 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       body: SafeArea(
         bottom: false,
         child: Column(

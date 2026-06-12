@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_icons.dart';
+import '../../constants/app_colors.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/theme_viewmodel.dart';
 
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final themeNotifier = context.watch<ThemeNotifier>();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: const Text('Mi Perfil'),
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: colors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF1E293B),
+        foregroundColor: colors.textPrimary,
       ),
       body: Consumer<AuthViewModel>(
         builder: (context, authVM, _) {
@@ -43,14 +48,16 @@ class PerfilScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   nombre,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: TextStyle(
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   correo,
-                  style: const TextStyle(color: Color(0xFF94A3B8)),
+                  style: TextStyle(color: colors.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -70,8 +77,92 @@ class PerfilScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
 
+                // Apariencia section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.shadow,
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Apariencia',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: colors.primaryLight,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: PhosphorIcon(
+                              themeNotifier.isDark
+                                  ? PhosphorIcons.moon()
+                                  : PhosphorIcons.sun(),
+                              size: 20,
+                              color: colors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Modo Oscuro',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  themeNotifier.isDark
+                                      ? 'Activado'
+                                      : 'Desactivado',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: themeNotifier.isDark,
+                            onChanged: (_) => themeNotifier.toggleTheme(),
+                            activeThumbColor: colors.primary,
+                            inactiveTrackColor: colors.border,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
                 // Info cards
                 _buildInfoCard(
+                  colors: colors,
                   icon: AppIcons.student,
                   label: 'Facultad',
                   value: facultad ?? 'No especificada',
@@ -79,6 +170,7 @@ class PerfilScreen extends StatelessWidget {
                 if (ciclo != null) ...[
                   const SizedBox(height: 12),
                   _buildInfoCard(
+                    colors: colors,
                     icon: PhosphorIcons.calendar(),
                     label: 'Ciclo',
                     value: '$ciclo',
@@ -86,6 +178,7 @@ class PerfilScreen extends StatelessWidget {
                 ],
                 const SizedBox(height: 12),
                 _buildInfoCard(
+                  colors: colors,
                   icon: PhosphorIcons.envelope(),
                   label: 'Correo',
                   value: correo,
@@ -97,11 +190,11 @@ class PerfilScreen extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.card,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: colors.shadow,
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -110,19 +203,19 @@ class PerfilScreen extends StatelessWidget {
                   child: ListTile(
                     leading: PhosphorIcon(
                       AppIcons.signOutIcon,
-                      color: const Color(0xFFEF4444),
+                      color: colors.danger,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Cerrar Sesión',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B),
+                        color: colors.textPrimary,
                       ),
                     ),
                     trailing: PhosphorIcon(
                       PhosphorIcons.caretRight(),
                       size: 18,
-                      color: const Color(0xFF94A3B8),
+                      color: colors.iconMuted,
                     ),
                     onTap: () {
                       authVM.logout();
@@ -141,6 +234,7 @@ class PerfilScreen extends StatelessWidget {
   }
 
   Widget _buildInfoCard({
+    required AppColors colors,
     required IconData icon,
     required String label,
     required String value,
@@ -149,11 +243,11 @@ class PerfilScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: colors.shadow,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -165,10 +259,10 @@ class PerfilScreen extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFEEF2FF),
+              color: colors.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: PhosphorIcon(icon, size: 20, color: const Color(0xFF6366F1)),
+            child: PhosphorIcon(icon, size: 20, color: colors.primary),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -177,18 +271,18 @@ class PerfilScreen extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF94A3B8),
+                    color: colors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
+                    color: colors.textPrimary,
                   ),
                 ),
               ],
