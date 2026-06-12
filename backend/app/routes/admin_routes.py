@@ -224,6 +224,12 @@ def editar_usuario(id_usuario):
             usuario.facultad = data['facultad']
         if 'ciclo' in data:
             usuario.ciclo = data['ciclo']
+        if 'rol' in data:
+            usuario.rol = data['rol']
+            
+            if data ['rol'] != ROLE_ESTUDIANTE:
+                usuario.facultad = None
+                usuario.ciclo = None
 
         db.session.commit()
 
