@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_icons.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 
 class PerfilScreen extends StatelessWidget {
@@ -8,7 +10,13 @@ class PerfilScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi Perfil')),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text('Mi Perfil'),
+        backgroundColor: const Color(0xFFF8FAFC),
+        elevation: 0,
+        foregroundColor: const Color(0xFF1E293B),
+      ),
       body: Consumer<AuthViewModel>(
         builder: (context, authVM, _) {
           final usuario = authVM.usuario;
@@ -26,7 +34,7 @@ class PerfilScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 44,
                   backgroundColor: _getRolColor(rol).withValues(alpha: 0.15),
-                  child: Icon(
+                  child: PhosphorIcon(
                     _getRolIcon(rol),
                     size: 44,
                     color: _getRolColor(rol),
@@ -64,21 +72,21 @@ class PerfilScreen extends StatelessWidget {
 
                 // Info cards
                 _buildInfoCard(
-                  icon: Icons.school_outlined,
+                  icon: AppIcons.student,
                   label: 'Facultad',
                   value: facultad ?? 'No especificada',
                 ),
                 if (ciclo != null) ...[
                   const SizedBox(height: 12),
                   _buildInfoCard(
-                    icon: Icons.calendar_today_outlined,
+                    icon: PhosphorIcons.calendar(),
                     label: 'Ciclo',
                     value: '$ciclo',
                   ),
                 ],
                 const SizedBox(height: 12),
                 _buildInfoCard(
-                  icon: Icons.email_outlined,
+                  icon: PhosphorIcons.envelope(),
                   label: 'Correo',
                   value: correo,
                 ),
@@ -86,10 +94,36 @@ class PerfilScreen extends StatelessWidget {
                 const SizedBox(height: 32),
 
                 // Logout button
-                Card(
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text('Cerrar Sesión'),
+                    leading: PhosphorIcon(
+                      AppIcons.signOutIcon,
+                      color: const Color(0xFFEF4444),
+                    ),
+                    title: const Text(
+                      'Cerrar Sesión',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    trailing: PhosphorIcon(
+                      PhosphorIcons.caretRight(),
+                      size: 18,
+                      color: const Color(0xFF94A3B8),
+                    ),
                     onTap: () {
                       authVM.logout();
                       Navigator.pushNamedAndRemoveUntil(
@@ -131,10 +165,10 @@ class PerfilScreen extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: const Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 20, color: const Color(0xFF64748B)),
+            child: PhosphorIcon(icon, size: 20, color: const Color(0xFF6366F1)),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -179,11 +213,11 @@ class PerfilScreen extends StatelessWidget {
   IconData _getRolIcon(String rol) {
     switch (rol) {
       case 'Admin':
-        return Icons.admin_panel_settings;
+        return AppIcons.shieldCheckFill;
       case 'Medico':
-        return Icons.local_hospital;
+        return AppIcons.firstAidFill;
       default:
-        return Icons.school;
+        return AppIcons.student;
     }
   }
 }
