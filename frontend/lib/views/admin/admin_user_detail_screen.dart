@@ -104,6 +104,46 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
     if (result == true) await _cargarDetalle();
   }
 
+  Future<void> _eliminarUsuario() async {
+    final nombre = _usuario?['nombre'] ?? 'este usuario';
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Usuario'),
+        content: Text('¿Estás seguro de eliminar a "$nombre"?\n\nSe eliminarán también todas sus evaluaciones y datos asociados.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      final apiService = ApiService();
+      final authVM = context.read<AuthViewModel>();
+      apiService.setToken(authVM.token);
+      await apiService.delete(
+        ApiConfig.adminUsuarioById(widget.userId),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario eliminado')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
@@ -116,12 +156,18 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
         foregroundColor: colors.textPrimary,
         elevation: 0,
         actions: [
-          if (_usuario != null)
+          if (_usuario != null) ...[
             IconButton(
               icon: PhosphorIcon(PhosphorIcons.pencil(), color: colors.primary),
               onPressed: _abrirFormEditar,
               tooltip: 'Editar Usuario',
             ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: _eliminarUsuario,
+              tooltip: 'Eliminar Usuario',
+            ),
+          ],
         ],
       ),
       body: _isLoading

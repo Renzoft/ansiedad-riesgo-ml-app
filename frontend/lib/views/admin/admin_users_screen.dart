@@ -7,6 +7,7 @@ import '../../services/api_service.dart';
 import '../../config/api_config.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'admin_user_form.dart';
+import 'admin_user_detail_screen.dart';
 
 /// Pantalla de gestión de usuarios para el Admin
 class AdminUsersScreen extends StatefulWidget {
@@ -299,6 +300,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
+  Future<void> _abrirDetalle(Map<String, dynamic> usuario) async {
+    final userId = usuario['id_usuario'] as int;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminUserDetailScreen(userId: userId),
+      ),
+    );
+    await _cargarUsuarios();
+  }
+
   Widget _buildUserCard(AppColors colors, Map<String, dynamic> usuario) {
     final rol = usuario['rol'] ?? 'Estudiante';
     final nombre = usuario['nombre'] ?? '';
@@ -341,7 +353,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         ),
         trailing: PopupMenuButton<String>(
           onSelected: (action) {
-            if (action == 'editar') {
+            if (action == 'detalle') {
+              _abrirDetalle(usuario);
+            } else if (action == 'editar') {
               _abrirForm(usuario);
             } else if (action == 'eliminar') {
               _eliminarUsuario(usuario);
@@ -350,6 +364,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             }
           },
           itemBuilder: (ctx) => [
+            const PopupMenuItem(value: 'detalle', child: ListTile(
+              leading: Icon(Icons.visibility, size: 20),
+              title: Text('Ver detalle'),
+              contentPadding: EdgeInsets.zero,
+            )),
             const PopupMenuItem(value: 'editar', child: ListTile(
               leading: Icon(Icons.edit, size: 20),
               title: Text('Editar'),
@@ -380,6 +399,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           icon: PhosphorIcon(PhosphorIcons.dotsThreeVertical(),
               size: 20, color: colors.iconMuted),
         ),
+        onTap: () => _abrirDetalle(usuario),
       ),
     );
   }
