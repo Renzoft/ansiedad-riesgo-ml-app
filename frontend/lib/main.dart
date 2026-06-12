@@ -7,6 +7,7 @@ import 'services/api_service.dart';
 // ViewModels
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/evaluacion_viewmodel.dart';
+import 'viewmodels/medico_viewmodel.dart';
 import 'viewmodels/theme_viewmodel.dart';
 
 // Theme
@@ -39,6 +40,7 @@ class AnsiedadApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
         ChangeNotifierProvider(create: (_) => AuthViewModel(apiService)),
         ChangeNotifierProvider(create: (_) => EvaluacionViewModel(apiService)),
+        ChangeNotifierProvider(create: (_) => MedicoViewModel(apiService)),
       ],
       child: Consumer<ThemeNotifier>(
         builder: (context, themeNotifier, _) {

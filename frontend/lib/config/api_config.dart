@@ -32,4 +32,12 @@ class ApiConfig {
   static String adminUsuarioById(int id) => '$baseUrl/api/v1/admin/usuarios/$id';
   static String adminCambiarRol(int id) => '$baseUrl/api/v1/admin/usuarios/$id/rol';
   static String adminEvaluacionById(int id) => '$baseUrl/api/v1/admin/evaluaciones/$id';
+
+  // ==========================================
+  // ENDPOINTS DE MÉDICO
+  // ==========================================
+  static const String medicoPacientes = '$baseUrl/api/v1/medico/pacientes';
+  static const String medicoEstadisticas = '$baseUrl/api/v1/medico/estadisticas';
+  static const String medicoEvaluacionesRecientes = '$baseUrl/api/v1/medico/evaluaciones-recientes';
+  static String medicoPacienteDetalle(int id) => '$baseUrl/api/v1/medico/pacientes/$id/detalle';
 }
