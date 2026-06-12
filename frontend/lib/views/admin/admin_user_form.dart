@@ -64,10 +64,12 @@ class _AdminUserFormState extends State<AdminUserForm> {
         'nombre': _nombreCtrl.text.trim(),
         'correo': _correoCtrl.text.trim(),
         'rol': _rol,
-        if (_facultadCtrl.text.trim().isNotEmpty)
-          'facultad': _facultadCtrl.text.trim(),
-        if (_cicloCtrl.text.trim().isNotEmpty)
-          'ciclo': int.tryParse(_cicloCtrl.text.trim()),
+        if (_rol == 'Estudiante') ...{
+          if (_facultadCtrl.text.trim().isNotEmpty)
+            'facultad': _facultadCtrl.text.trim(),
+          if (_cicloCtrl.text.trim().isNotEmpty)
+            'ciclo': int.tryParse(_cicloCtrl.text.trim()),
+        },
       };
 
       if (_isEditing) {
@@ -205,25 +207,36 @@ class _AdminUserFormState extends State<AdminUserForm> {
                     DropdownMenuItem(value: 'Admin', child: Text('Admin')),
                   ],
                   onChanged: (v) {
-                    if (v != null) setState(() => _rol = v);
+                    if (v != null) {
+                      setState(() {
+                        _rol = v;
+
+                        if (v != 'Estudiante') {
+                          _facultadCtrl.clear();
+                          _cicloCtrl.clear();
+                        }
+                      });
+                    }
                   },
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildField(
-                colors: colors,
-                controller: _facultadCtrl,
-                label: 'Facultad',
-                icon: PhosphorIcons.building(),
-              ),
-              const SizedBox(height: 16),
-              _buildField(
-                colors: colors,
-                controller: _cicloCtrl,
-                label: 'Ciclo',
-                icon: PhosphorIcons.hash(),
-                keyboardType: TextInputType.number,
-              ),
+              if (_rol == 'Estudiante') ...[
+                const SizedBox(height: 16),
+                _buildField(
+                  colors: colors,
+                  controller: _facultadCtrl,
+                  label: 'Facultad',
+                  icon: PhosphorIcons.building(),
+                ),
+                const SizedBox(height: 16),
+                _buildField(
+                  colors: colors,
+                  controller: _cicloCtrl,
+                  label: 'Ciclo',
+                  icon: PhosphorIcons.hash(),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
