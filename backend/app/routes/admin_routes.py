@@ -14,6 +14,69 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/api/v1/admin")
 
 
 # ==========================================
+# POST /usuarios  →  Crear un nuevo usuario
+# ==========================================
+@admin_bp.route('/usuarios', methods=['POST'])
+@jwt_required()
+@role_required(ROLE_ADMIN)
+def crear_usuario():
+    """
+    Crea un nuevo usuario en el sistema.
+    Body (JSON):
+    {
+        "nombre": "Juan Pérez",
+        "correo": "juan@universidad.edu",
+        "contrasena": "123456",
+        "rol": "Estudiante",
+        "facultad": "Ingeniería",
+        "ciclo": 5
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Datos inválidos", "mensaje": "Se requiere JSON"}), 400
+
+        # Validar campos obligatorios
+        campos_requeridos = ['nombre', 'correo', 'contrasena']
+        for campo in campos_requeridos:
+            if campo not in data or not data[campo]:
+                return jsonify({
+                    "error": "Datos inválidos",
+                    "mensaje": f"El campo '{campo}' es obligatorio"
+                }), 400
+
+        # Verificar si el correo ya existe
+        if Usuario.query.filter_by(correo=data['correo']).first():
+            return jsonify({
+                "error": "Correo duplicado",
+                "mensaje": "Ya existe un usuario con ese correo"
+            }), 409
+
+        # Crear usuario
+        nuevo_usuario = Usuario(
+            nombre=data['nombre'],
+            correo=data['correo'],
+            rol=data.get('rol', ROLE_ESTUDIANTE),
+            facultad=data.get('facultad'),
+            ciclo=data.get('ciclo'),
+        )
+        nuevo_usuario.establecer_contrasena(data['contrasena'])
+
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+
+        return jsonify({
+            "mensaje": "Usuario creado correctamente",
+            "usuario": nuevo_usuario.to_dict()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Error interno", "mensaje": str(e)}), 500
+
+
+# ==========================================
 # GET /usuarios  →  Listar todos los usuarios
 # ==========================================
 @admin_bp.route('/usuarios', methods=['GET'])
@@ -110,6 +173,62 @@ def cambiar_rol(id_usuario):
 
         return jsonify({
             "mensaje": "Rol actualizado correctamente",
+            "usuario": usuario.to_dict()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Error interno", "mensaje": str(e)}), 500
+
+
+# ==========================================
+# PUT /usuarios/<id>  →  Editar datos de un usuario
+# ==========================================
+@admin_bp.route('/usuarios/<int:id_usuario>', methods=['PUT'])
+@jwt_required()
+@role_required(ROLE_ADMIN)
+def editar_usuario(id_usuario):
+    """
+    Editar datos de un usuario (nombre, correo, facultad, ciclo).
+    No permite cambiar la contraseña desde aquí por seguridad.
+    Body (JSON):
+    {
+        "nombre": "Juan Pérez Actualizado",
+        "correo": "juan@universidad.edu",
+        "facultad": "Ingeniería",
+        "ciclo": 6
+    }
+    """
+    try:
+        usuario = Usuario.query.get(id_usuario)
+        if not usuario:
+            return jsonify({"error": "No encontrado", "mensaje": "Usuario no encontrado"}), 404
+
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Datos inválidos", "mensaje": "Se requiere JSON"}), 400
+
+        # Actualizar solo los campos enviados
+        if 'nombre' in data:
+            usuario.nombre = data['nombre']
+        if 'correo' in data:
+            # Verificar que el correo no esté en uso por otro usuario
+            existente = Usuario.query.filter_by(correo=data['correo']).first()
+            if existente and existente.id_usuario != id_usuario:
+                return jsonify({
+                    "error": "Correo duplicado",
+                    "mensaje": "Ya existe otro usuario con ese correo"
+                }), 409
+            usuario.correo = data['correo']
+        if 'facultad' in data:
+            usuario.facultad = data['facultad']
+        if 'ciclo' in data:
+            usuario.ciclo = data['ciclo']
+
+        db.session.commit()
+
+        return jsonify({
+            "mensaje": "Usuario actualizado correctamente",
             "usuario": usuario.to_dict()
         }), 200
 
