@@ -9,7 +9,9 @@ import '../../config/api_config.dart';
 import '../../widgets/animated_counter.dart';
 import '../../widgets/animated_donut_chart.dart';
 import '../../widgets/animated_bar_chart.dart';
+import 'admin_user_form.dart';
 import 'admin_users_screen.dart';
+import 'admin_user_detail_screen.dart';
 
 /// Dashboard principal para el rol Admin
 class AdminHomeScreen extends StatefulWidget {
@@ -843,20 +845,41 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colors.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_usuarios.length} total',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colors.primary,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _abrirFormUsuario(null),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.primaryLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: PhosphorIcon(
+                        PhosphorIcons.plus(),
+                        size: 20,
+                        color: colors.primary,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colors.primaryLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${_usuarios.length} total',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -903,36 +926,43 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       color: colors.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => _abrirFormUsuario(null),
+                    icon: PhosphorIcon(PhosphorIcons.plus(), size: 18),
+                    label: const Text('Crear Usuario'),
+                  ),
                 ],
               ),
             )
           else
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: _usuarios.length,
-                itemBuilder: (context, index) {
-                  final usuario = _usuarios[index];
-                  final rol = usuario['rol'] ?? 'Estudiante';
-                  return FadeInSlide(
-                    delay: Duration(milliseconds: index * 80),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: colors.card,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.shadow,
-                            blurRadius: 8,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
+              child: RefreshIndicator(
+                onRefresh: _cargarUsuarios,
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: _usuarios.length,
+                  itemBuilder: (context, index) {
+                    final usuario = _usuarios[index];
+                    final rol = usuario['rol'] ?? 'Estudiante';
+                    return FadeInSlide(
+                      delay: Duration(milliseconds: index * 80),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: colors.card,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.shadow,
+                              blurRadius: 8,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          leading: CircleAvatar(
                             radius: 20,
                             backgroundColor: _getRolColor(rol).withValues(alpha: 0.15),
                             child: PhosphorIcon(
@@ -941,53 +971,155 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               color: _getRolColor(rol),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  usuario['nombre'] ?? '',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  usuario['correo'] ?? '',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: colors.textSecondary,
-                                  ),
-                                ),
-                              ],
+                          title: Text(
+                            usuario['nombre'] ?? '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: colors.textPrimary,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getRolColor(rol).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              rol,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: _getRolColor(rol),
-                              ),
-                            ),
+                          subtitle: Text(
+                            usuario['correo'] ?? '',
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
-                        ],
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (action) {
+                              if (action == 'detalle') {
+                                _abrirDetalle(usuario);
+                              } else if (action == 'editar') {
+                                _abrirFormUsuario(usuario);
+                              } else if (action == 'eliminar') {
+                                _eliminarUsuario(usuario);
+                              } else if (action.startsWith('rol_')) {
+                                _cambiarRol(usuario, action.replaceFirst('rol_', ''));
+                              }
+                            },
+                            itemBuilder: (ctx) => [
+                              const PopupMenuItem(value: 'detalle', child: ListTile(
+                                leading: Icon(Icons.visibility, size: 20),
+                                title: Text('Ver detalle'),
+                                contentPadding: EdgeInsets.zero,
+                              )),
+                              const PopupMenuItem(value: 'editar', child: ListTile(
+                                leading: Icon(Icons.edit, size: 20),
+                                title: Text('Editar'),
+                                contentPadding: EdgeInsets.zero,
+                              )),
+                              PopupMenuItem(value: 'rol_Estudiante', child: ListTile(
+                                leading: PhosphorIcon(PhosphorIcons.graduationCap(), size: 20),
+                                title: const Text('Rol: Estudiante'),
+                                contentPadding: EdgeInsets.zero,
+                              )),
+                              PopupMenuItem(value: 'rol_Medico', child: ListTile(
+                                leading: PhosphorIcon(PhosphorIcons.stethoscope(), size: 20),
+                                title: const Text('Rol: Médico'),
+                                contentPadding: EdgeInsets.zero,
+                              )),
+                              PopupMenuItem(value: 'rol_Admin', child: ListTile(
+                                leading: PhosphorIcon(PhosphorIcons.shieldCheck(), size: 20),
+                                title: const Text('Rol: Admin'),
+                                contentPadding: EdgeInsets.zero,
+                              )),
+                              const PopupMenuDivider(),
+                              const PopupMenuItem(value: 'eliminar', child: ListTile(
+                                leading: Icon(Icons.delete, size: 20, color: Colors.red),
+                                title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                contentPadding: EdgeInsets.zero,
+                              )),
+                            ],
+                            icon: PhosphorIcon(PhosphorIcons.dotsThreeVertical(),
+                                size: 20, color: colors.iconMuted),
+                          ),
+                          onTap: () => _abrirDetalle(usuario),
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
         ],
       ),
     );
+  }
+
+  Future<void> _abrirFormUsuario(Map<String, dynamic>? usuario) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminUserForm(usuario: usuario),
+      ),
+    );
+    if (result == true) await _cargarUsuarios();
+  }
+
+  Future<void> _abrirDetalle(Map<String, dynamic> usuario) async {
+    final userId = usuario['id_usuario'] as int;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminUserDetailScreen(userId: userId),
+      ),
+    );
+    await _cargarUsuarios();
+  }
+
+  Future<void> _eliminarUsuario(Map<String, dynamic> usuario) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Usuario'),
+        content: Text('¿Estás seguro de eliminar a "${usuario['nombre']}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      final apiService = ApiService();
+      final authVM = context.read<AuthViewModel>();
+      apiService.setToken(authVM.token);
+      await apiService.delete(
+        ApiConfig.adminUsuarioById(usuario['id_usuario']),
+      );
+      await _cargarUsuarios();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario eliminado')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _cambiarRol(Map<String, dynamic> usuario, String nuevoRol) async {
+    try {
+      final apiService = ApiService();
+      final authVM = context.read<AuthViewModel>();
+      apiService.setToken(authVM.token);
+      await apiService.put(
+        ApiConfig.adminCambiarRol(usuario['id_usuario']),
+        body: {'rol': nuevoRol},
+      );
+      await _cargarUsuarios();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Color _getRolColor(String rol) {

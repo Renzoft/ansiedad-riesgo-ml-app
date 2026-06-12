@@ -317,3 +317,29 @@ def estadisticas():
 
     except Exception as e:
         return jsonify({"error": "Error interno", "mensaje": str(e)}), 500
+
+
+# ==========================================
+# DELETE /evaluaciones/<id>  →  Eliminar evaluación (admin)
+# ==========================================
+@admin_bp.route('/evaluaciones/<int:id_evaluacion>', methods=['DELETE'])
+@jwt_required()
+@role_required(ROLE_ADMIN)
+def eliminar_evaluacion(id_evaluacion):
+    """
+    Elimina una evaluación específica y sus resultados ML asociados.
+    Solo accesible para administradores.
+    """
+    try:
+        evaluacion = Evaluacion.query.get(id_evaluacion)
+        if not evaluacion:
+            return jsonify({"error": "No encontrado", "mensaje": "Evaluación no encontrada"}), 404
+
+        db.session.delete(evaluacion)
+        db.session.commit()
+
+        return jsonify({"mensaje": "Evaluación eliminada correctamente"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Error interno", "mensaje": str(e)}), 500
