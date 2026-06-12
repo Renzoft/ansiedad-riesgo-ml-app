@@ -28,4 +28,7 @@ class ApiConfig {
   // ==========================================
   static const String adminUsuarios = '$baseUrl/api/v1/admin/usuarios';
   static const String adminEstadisticas = '$baseUrl/api/v1/admin/usuarios/estadisticas';
+
+  static String adminUsuarioById(int id) => '$baseUrl/api/v1/admin/usuarios/$id';
+  static String adminCambiarRol(int id) => '$baseUrl/api/v1/admin/usuarios/$id/rol';
 }

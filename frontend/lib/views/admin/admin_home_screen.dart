@@ -9,6 +9,7 @@ import '../../config/api_config.dart';
 import '../../widgets/animated_counter.dart';
 import '../../widgets/animated_donut_chart.dart';
 import '../../widgets/animated_bar_chart.dart';
+import 'admin_users_screen.dart';
 
 /// Dashboard principal para el rol Admin
 class AdminHomeScreen extends StatefulWidget {
@@ -605,7 +606,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               color: const Color(0xFF3B82F6),
               label: 'Gestionar\nUsuarios',
               onTap: () {
-                setState(() => _currentNavIndex = 1);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
+                );
               },
             ),
             const SizedBox(width: 12),
