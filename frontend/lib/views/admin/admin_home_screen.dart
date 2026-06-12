@@ -611,16 +611,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             const SizedBox(width: 12),
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.chartBar(),
-              color: const Color(0xFF059669),
-              label: 'Ver\nReportes',
-              onTap: () {
-                setState(() => _currentNavIndex = 1);
-              },
-            ),
-            const SizedBox(width: 12),
-            _buildActionCard(
-              colors: colors,
               icon: PhosphorIcons.userGear(),
               color: const Color(0xFFF59E0B),
               label: 'Mi\nPerfil',
