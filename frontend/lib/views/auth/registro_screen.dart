@@ -132,6 +132,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     TextFormField(
                       controller: _nombreController,
                       textCapitalization: TextCapitalization.words,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -178,6 +179,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     TextFormField(
                       controller: _correoController,
                       keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -227,6 +229,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     TextFormField(
                       controller: _contrasenaController,
                       obscureText: _obscurePassword,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -289,6 +292,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     TextFormField(
                       controller: _confirmarController,
                       obscureText: _obscureConfirm,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -347,6 +351,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     // ==========================================
                     DropdownButtonFormField<String>(
                       value: _facultad,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -403,6 +408,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     // ==========================================
                     DropdownButtonFormField<int>(
                       value: _ciclo,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,

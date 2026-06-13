@@ -129,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _correoController,
                       keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -178,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _contrasenaController,
                       obscureText: _obscurePassword,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
