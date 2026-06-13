@@ -351,6 +351,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     // ==========================================
                     DropdownButtonFormField<String>(
                       value: _facultad,
+                      dropdownColor: Colors.white,
                       style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
@@ -408,6 +409,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     // ==========================================
                     DropdownButtonFormField<int>(
                       value: _ciclo,
+                      dropdownColor: Colors.white,
                       style: const TextStyle(color: Color(0xFF1E293B)),
                       decoration: InputDecoration(
                         filled: true,
