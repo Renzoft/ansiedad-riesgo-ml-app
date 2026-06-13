@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_icons.dart';
@@ -152,7 +152,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: PhosphorIcon(PhosphorIcons.plus(), color: colors.primary),
+            icon: PhosphorIcon(PhosphorIcons.plus, color: colors.primary),
             onPressed: () => _abrirForm(null),
             tooltip: 'Crear Usuario',
           ),
@@ -184,14 +184,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       hintText: 'Buscar por nombre o correo...',
                       hintStyle: TextStyle(color: colors.textSecondary),
                       prefixIcon: PhosphorIcon(
-                        PhosphorIcons.magnifyingGlass(),
+                        PhosphorIcons.magnifyingGlass,
                         size: 20,
                         color: colors.iconMuted,
                       ),
                       suffixIcon: _busqueda.isNotEmpty
                           ? IconButton(
                               icon: PhosphorIcon(
-                                PhosphorIcons.x(),
+                                PhosphorIcons.x,
                                 size: 18,
                                 color: colors.iconMuted,
                               ),
@@ -283,7 +283,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         children: [
           PhosphorIcon(
             _busqueda.isNotEmpty
-                ? PhosphorIcons.magnifyingGlass()
+                ? PhosphorIcons.magnifyingGlass
                 : AppIcons.usersIcon,
             size: 48,
             color: colors.iconMuted,
@@ -375,17 +375,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               contentPadding: EdgeInsets.zero,
             )),
             PopupMenuItem(value: 'rol_Estudiante', child: ListTile(
-              leading: PhosphorIcon(PhosphorIcons.graduationCap(), size: 20),
+              leading: PhosphorIcon(PhosphorIcons.graduationCap, size: 20),
               title: const Text('Rol: Estudiante'),
               contentPadding: EdgeInsets.zero,
             )),
             PopupMenuItem(value: 'rol_Medico', child: ListTile(
-              leading: PhosphorIcon(PhosphorIcons.stethoscope(), size: 20),
+              leading: PhosphorIcon(PhosphorIcons.stethoscope, size: 20),
               title: const Text('Rol: Médico'),
               contentPadding: EdgeInsets.zero,
             )),
             PopupMenuItem(value: 'rol_Admin', child: ListTile(
-              leading: PhosphorIcon(PhosphorIcons.shieldCheck(), size: 20),
+              leading: PhosphorIcon(PhosphorIcons.shieldCheck, size: 20),
               title: const Text('Rol: Admin'),
               contentPadding: EdgeInsets.zero,
             )),
@@ -396,7 +396,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               contentPadding: EdgeInsets.zero,
             )),
           ],
-          icon: PhosphorIcon(PhosphorIcons.dotsThreeVertical(),
+          icon: PhosphorIcon(PhosphorIcons.dotsThreeVertical,
               size: 20, color: colors.iconMuted),
         ),
         onTap: () => _abrirDetalle(usuario),
@@ -418,11 +418,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   IconData _getRolIcon(String rol) {
     switch (rol) {
       case 'Admin':
-        return PhosphorIcons.shieldCheck();
+        return PhosphorIcons.shieldCheck;
       case 'Medico':
-        return PhosphorIcons.stethoscope();
+        return PhosphorIcons.stethoscope;
       default:
-        return PhosphorIcons.graduationCap();
+        return PhosphorIcons.graduationCap;
     }
   }
 }

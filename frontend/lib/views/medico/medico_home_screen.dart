@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -224,7 +224,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           children: [
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.userList(),
+              icon: PhosphorIcons.userList,
               accentColor: const Color(0xFF3B82F6),
               label: 'Pacientes',
               value: totalPacientes,
@@ -232,7 +232,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
             const SizedBox(width: 12),
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.clipboardText(),
+              icon: PhosphorIcons.clipboardText,
               accentColor: const Color(0xFF059669),
               label: 'Evaluaciones',
               value: totalEvals,
@@ -244,7 +244,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           children: [
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.warningOctagon(),
+              icon: PhosphorIcons.warningOctagon,
               accentColor: const Color(0xFFEF4444),
               label: 'Riesgo Alto',
               value: riesgoAlto,
@@ -252,7 +252,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
             const SizedBox(width: 12),
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.stethoscope(),
+              icon: PhosphorIcons.stethoscope,
               accentColor: const Color(0xFFF59E0B),
               label: 'Atendidos hoy',
               value: 0, // Placeholder - podría ampliarse después
@@ -387,7 +387,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               PhosphorIcon(
-                                PhosphorIcons.chartPieSlice(),
+                                PhosphorIcons.chartPieSlice,
                                 size: 40,
                                 color: colors.iconMuted,
                               ),
@@ -496,7 +496,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           children: [
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.clipboardText(),
+              icon: PhosphorIcons.clipboardText,
               color: const Color(0xFF6366F1),
               label: 'Ver\nEvaluaciones',
               onTap: () => Navigator.pushNamed(context, '/historial'),
@@ -504,7 +504,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
             const SizedBox(width: 12),
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.userList(),
+              icon: PhosphorIcons.userList,
               color: const Color(0xFF3B82F6),
               label: 'Pacientes',
               onTap: () {
@@ -518,7 +518,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           children: [
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.chartLineUp(),
+              icon: PhosphorIcons.chartLineUp,
               color: const Color(0xFF059669),
               label: 'Reportes\n',
               onTap: () {
@@ -537,7 +537,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
             const SizedBox(width: 12),
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.heartbeat(),
+              icon: PhosphorIcons.heartbeat,
               color: const Color(0xFFF59E0B),
               label: 'Recomen-\ndaciones',
               onTap: () {
@@ -648,7 +648,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
             child: Column(
               children: [
                 PhosphorIcon(
-                  PhosphorIcons.timer(),
+                  PhosphorIcons.timer,
                   size: 48,
                   color: colors.iconMuted,
                 ),
@@ -785,7 +785,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           child: Row(
             children: [
               PhosphorIcon(
-                PhosphorIcons.clipboardText(),
+                PhosphorIcons.clipboardText,
                 size: 26,
                 color: colors.primary,
               ),
@@ -844,7 +844,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
               child: Column(
                 children: [
                   PhosphorIcon(
-                    PhosphorIcons.userList(),
+                    PhosphorIcons.userList,
                     size: 56,
                     color: colors.iconMuted,
                   ),
@@ -967,9 +967,9 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(index: 0, icon: PhosphorIcons.house(), label: 'Inicio'),
-              _buildNavItem(index: 1, icon: PhosphorIcons.clipboardText(), label: 'Pacientes'),
-              _buildNavItem(index: 2, icon: PhosphorIcons.userCircle(), label: 'Perfil'),
+              _buildNavItem(index: 0, icon: PhosphorIcons.house, label: 'Inicio'),
+              _buildNavItem(index: 1, icon: PhosphorIcons.clipboardText, label: 'Pacientes'),
+              _buildNavItem(index: 2, icon: PhosphorIcons.userCircle, label: 'Perfil'),
             ],
           ),
         ),
@@ -1054,13 +1054,13 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
   IconData _getRiesgoIcon(String nivel) {
     switch (nivel) {
       case 'BAJO':
-        return PhosphorIcons.smiley();
+        return PhosphorIcons.smiley;
       case 'MEDIO':
-        return PhosphorIcons.warning();
+        return PhosphorIcons.warning;
       case 'ALTO':
-        return PhosphorIcons.xCircle();
+        return PhosphorIcons.xCircle;
       default:
-        return PhosphorIcons.question();
+        return PhosphorIcons.question;
     }
   }
 
