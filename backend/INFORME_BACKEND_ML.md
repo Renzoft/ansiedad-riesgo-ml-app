@@ -1,22 +1,25 @@
 # Informe del Backend y Modelos de Machine Learning
 
-Este documento explica el funcionamiento técnico de la capa de backend de la aplicación, su arquitectura, y los detalles sobre el modelo predictivo de Machine Learning implementado para estimar el riesgo de ansiedad (HU-11).
+Este documento explica el funcionamiento técnico de la capa de backend de la aplicación, su arquitectura relacional y el ensamble predictivo de Machine Learning implementado para la estimación del riesgo de ansiedad en estudiantes universitarios (HU-11).
+
+---
 
 ## 1. Arquitectura del Backend
 
-El backend está desarrollado utilizando **Python** y el framework **Flask**, con una arquitectura orientada a Blueprints (módulos) para mantener un código limpio, legible y escalable.
+El backend está desarrollado utilizando **Python** y el framework **Flask**, con una arquitectura modular orientada a *Blueprints* para asegurar la separación de responsabilidades, la legibilidad y la escalabilidad del código.
 
 ### Tecnologías Clave
-- **Flask:** Microframework web encargado del enrutamiento.
-- **SQLAlchemy:** ORM (Object-Relational Mapping) para interactuar con la base de datos sin escribir SQL crudo.
-- **Flask-Migrate (Alembic):** Control de versiones y migraciones de esquemas en la base de datos (se usa el parámetro `render_as_batch=True` internamente para un soporte óptimo de alteraciones de tablas en SQLite).
-- **Flask-JWT-Extended:** Autenticación segura y persistencia de sesión a través de JSON Web Tokens para proteger los endpoints.
-- **SQLite:** Base de datos relacional ligera utilizada en la fase actual de desarrollo.
+- **Flask:** Microframework web encargado del enrutamiento de la API REST.
+- **SQLAlchemy:** ORM (Object-Relational Mapping) para interactuar de forma segura con la base de datos mediante clases de Python, eliminando la escritura de SQL crudo y previniendo inyecciones SQL.
+- **Flask-Migrate (Alembic):** Control de versiones y migraciones estructuradas del esquema de base de datos.
+- **Flask-Bcrypt:** Encriptación de contraseñas de usuarios mediante hashing seguro de una vía.
+- **Flask-JWT-Extended:** Autenticación de sesiones mediante JSON Web Tokens para la protección de endpoints restringidos a nivel de roles.
 
-### Módulos Principales (Blueprints)
-- `/registro` y `/login`: Gestión segura de identidades, perfiles multidimensionales y contraseñas encriptadas (usando bcrypt).
-- `/habitos`: Endpoints protegidos para registrar y consultar indicadores de estilo de vida diarios (sueño, dieta, pantallas).
-- `/api/v1/evaluaciones`: Endpoints para generar predicciones de riesgo emocional e interrogar el historial de evaluaciones del usuario.
+### Base de Datos y Persistencia Local (SQLite)
+La aplicación almacena toda su información en una base de datos relacional local **SQLite**.
+- **Archivo Físico de Persistencia:** Los datos se escriben directamente en el disco duro en el archivo localizado en:
+  `backend/instance/base_datos.db`
+- **Garantía de Persistencia:** Debido a que SQLite escribe de forma síncrona en un archivo del sistema de archivos de Windows, **los datos de usuarios, evaluaciones e historiales persisten indefinidamente**. Si cierras las terminales de VSCode, apagas tu computadora o detienes el servidor, ningún dato se perderá. Al reiniciar la app, los registros se cargarán de forma íntegra.
 
 ---
 
@@ -25,62 +28,62 @@ El backend está desarrollado utilizando **Python** y el framework **Flask**, co
 El propósito central de la aplicación es identificar a estudiantes universitarios con riesgo de ansiedad de manera temprana, basándose en variables psicoeducativas y de estilo de vida.
 
 ### Vector de Características
-El modelo predice el riesgo combinando **15 características estrictas**, extraídas de dos fuentes: el perfil del estudiante (9 variables) y su último hábito diario (6 variables).
+El modelo predice el riesgo combinando **15 características estrictas**, las cuales son recolectadas de manera interactiva por el estudiante mediante el cuestionario paso a paso de Flutter:
 
-**Orden estricto procesado por el modelo:**
-1. `phq9` (Depresión, 0-27)
-2. `gad7` (Ansiedad, 0-21)
-3. `sleep_hours` (Horas de sueño)
-4. `exercise_freq` (Frecuencia de ejercicio)
-5. `social_activity` (Actividad social)
-6. `online_stress` (Estrés online)
-7. `gpa` (Rendimiento académico)
-8. `family_support` (Apoyo familiar)
-9. `screen_time` (Tiempo de pantalla)
-10. `academic_stress` (Estrés académico)
-11. `diet_quality` (Calidad de dieta)
-12. `self_efficacy` (Autoeficacia)
-13. `peer_relationship` (Relación con compañeros)
-14. `financial_stress` (Estrés financiero)
-15. `sleep_quality` (Calidad de sueño)
+1. `phq9_score` (Nivel de depresión, rango 0-27)
+2. `gad7_score` (Nivel de ansiedad, rango 0-21)
+3. `sleep_hours` (Horas de sueño al día, rango 3.0-10.0)
+4. `exercise_freq` (Días de ejercicio a la semana, rango 0-7)
+5. `social_activity` (Nivel de actividad social, rango 0-10)
+6. `online_stress` (Estrés generado por internet, rango 1-10)
+7. `gpa` (Promedio académico acumulado, rango 0.0-5.0)
+8. `family_support` (Nivel de apoyo familiar, rango 1-10)
+9. `screen_time` (Horas frente a pantallas al día, rango 1.0-12.0)
+10. `academic_stress` (Estrés por exigencia de estudios, rango 1-10)
+11. `diet_quality` (Calidad de la dieta diaria, rango 1-10)
+12. `self_efficacy` (Nivel de autoeficacia y seguridad, rango 1-10)
+13. `peer_relationship` (Calidad de relación con compañeros, rango 1-10)
+14. `financial_stress` (Estrés por finanzas personales, rango 1-10)
+15. `sleep_quality` (Calidad general de descanso, rango 0-10)
 
-### Proceso de Entrenamiento de los Modelos
-El entrenamiento de estos modelos se realizó de forma aislada en un entorno de **Jupyter Notebook / Google Colab** utilizando la librería `scikit-learn` y el framework `CatBoost`. El flujo de trabajo para generar los archivos `.pkl` fue el siguiente:
+Estas variables se registran de manera transaccional en la tabla `evaluacion` por cada intento antes de ser procesadas por el estimador.
 
-1. **Recolección y Limpieza de Datos:** 
-   - Se utilizó el dataset público de Kaggle centrado en la salud mental, hábitos y rendimiento de estudiantes universitarios.
-   - Se aplicó limpieza de datos, eliminando duplicados y manejando valores atípicos (outliers) e imputación de nulos.
-2. **Preprocesamiento:**
-   - **Escalado:** Las variables numéricas (como `phq9`, `gad7`, `gpa`) fueron estandarizadas mediante `StandardScaler` o `MinMaxScaler` para asegurar que los modelos sensibles a la escala (como Regresión Logística) no tengan sesgos.
-   - **Balanceo:** Se aplicaron técnicas de balanceo (como SMOTE o ajuste de pesos) para contrarrestar el desbalance natural de las clases en diagnósticos médicos.
-3. **Definición del Target (Variable Objetivo):**
-   - Se definió un problema de clasificación binaria estricta donde la **Clase 0** representa "Estudiante en Riesgo de Ansiedad" y la **Clase 1** representa "Saludable".
-4. **Entrenamiento y Afinamiento (Hyperparameter Tuning):**
-   - El dataset fue dividido en entrenamiento (80%) y prueba (20%).
-   - Se empleó Validación Cruzada (K-Fold Cross-Validation) y `GridSearchCV` para encontrar los hiperparámetros óptimos que maximicen el **Recall** (sensibilidad para detectar los positivos reales) y el **F1-Score**.
-5. **Exportación de Artefactos:**
-   - Una vez validados los tres algoritmos elegidos, los modelos resultantes fueron serializados y comprimidos utilizando la librería `joblib`.
-   - Se generaron los archivos binarios `logistic_regression.pkl`, `catboost_model.pkl` y `random_forest.pkl`, los cuales se ubican en `backend/app/static/models/` listos para ser consumidos por el backend de Flask en producción.
+---
 
-### Enfoque de Modelado: Ensamble por Votación Suave (Soft Voting)
-Para garantizar el mejor rendimiento predictivo sobre el dataset, se utiliza un ensamble de tres modelos pre-entrenados:
-1. **Regresión Logística:** Excelente para capturar linealidades y pesos base.
-2. **CatBoost:** Poderoso algoritmo de Gradient Boosting que maneja excepcionalmente bien relaciones complejas y no lineales.
-3. **Random Forest:** Conjunto de múltiples árboles de decisión que previene el sobreajuste (overfitting).
+## 3. Enfoque de Modelado: Ensamble por Votación Suave (Soft Voting)
 
-En lugar de que un solo modelo tenga la última palabra, la aplicación utiliza **Soft Voting**. La clase `AnxietyPredictorService` recibe las probabilidades individuales de cada modelo y obtiene un promedio ponderado exacto, devolviendo un resultado estadísticamente mucho más robusto.
+Para garantizar la mayor precisión y robustez predictiva, reduciendo los falsos negativos comunes en modelos individuales, el sistema implementa un **ensamble de 6 modelos preentrenados** de clasificación binaria (Clase 0: Con Riesgo de Ansiedad, Clase 1: Saludable):
 
-### Tolerancia a Fallos y Desarrollo Continuo (Fallback)
-Dado que las librerías `numpy` y `joblib` (necesarias para inferir modelos `.pkl`) son pesadas y pueden no estar instaladas durante pruebas rápidas de frontend o desarrollo paralelo, el sistema es **altamente tolerante a fallos de importación**.
+1. **Regresión Logística (`logistic_regression_model.pkl`):** Captura dependencias y pesos lineales base. Espera el vector completo de 15 variables.
+2. **K-Nearest Neighbors (`knn_model.pkl`):** Clasifica en base a vecindad de características. Espera 7 variables clave.
+3. **LightGBM (`lightgbm_model.pkl`):** Algoritmo de Gradient Boosting ultrarrápido optimizado en árbol. Espera 7 variables clave.
+4. **Random Forest (`random_forest_model.pkl`):** Ensamble de árboles de decisión que previene el sobreajuste. Espera 7 variables clave.
+5. **XGBoost Ponderado (`xgboost_weighted_model.pkl`):** Potente clasificador con regularización. Espera 7 variables clave.
+6. **CatBoost Ponderado (`catboost_weighted_model.pkl`):** Algoritmo de Gradient Boosting de alto desempeño para manejar relaciones complejas. Espera el vector de 15 variables.
 
-Si la aplicación detecta que faltan las librerías ML o los archivos de los modelos, no crashea la API. En su lugar, activa automáticamente un **Fallback Matemático** basado en escalas clínicas estándar:
+La clase `AnxietyPredictorService` en `ml_service.py` recibe el vector del usuario, adapta su tamaño automáticamente según las necesidades de cada modelo (7 o 15 variables) mediante el mapeo interno, invoca la inferencia probabilística de cada uno y realiza un **Promedio Simple de las Probabilidades (Soft Voting)** para generar la estimación final robusta.
+
+---
+
+## 4. Tolerancia a Fallos y Desarrollo Continuo (Fallback)
+
+Debido a que librerías pesadas como `numpy`, `joblib` u otras necesarias para la carga de modelos de Machine Learning pueden no estar presentes durante despliegues rápidos en el frontend, el backend implementa un **mecanismo automático de respaldo (Fallback)**.
+
+Si las librerías científicas fallan al importarse o alguno de los modelos `.pkl` en `app/static/models/` está ausente, el servidor de Flask **no crasheará ni interrumpirá el servicio**. En su lugar, registrará una advertencia y recurrirá a un algoritmo de aproximación clínica estándar que estima la probabilidad basándose puramente en las escalas estandarizadas del test:
+
 ```python
 probabilidad = (phq9 / 27.0) * 0.6 + (gad7 / 21.0) * 0.4
 ```
-Esto permite probar las lógicas de categorización y guardado en la base de datos sin depender del despliegue de los modelos.
 
-### Categorización de Resultados y Acción
-La probabilidad resultante (entre 0 y 1) se clasifica automáticamente para devolver información amigable y empática al frontend:
-- **< 0.35 (BAJO):** Equilibrio saludable.
-- **0.35 a 0.70 (MEDIO):** Ciertos niveles de alerta (Requiere revisión de hábitos).
-- **> 0.70 (ALTO):** Alta predisposición a la ansiedad. Recomienda orientación inmediata.
+Esto garantiza el desarrollo continuo y permite probar la base de datos y flujos de usuario sin depender de dependencias de IA.
+
+---
+
+## 5. Categorización de Resultados y Recomendaciones
+
+La probabilidad de riesgo resultante (rango de 0.0 a 1.0) es clasificada automáticamente en el backend en una de tres categorías de alerta:
+- **Riesgo Bajo (Probabilidad < 0.35):** Indica equilibrio emocional. Vincula recomendaciones de mantenimiento y hábitos saludables.
+- **Riesgo Medio (Probabilidad de 0.35 a 0.70):** Indica alertas en el descanso o estrés académico. Sugiere pausas activas y autoevaluación de tiempos.
+- **Riesgo Alto (Probabilidad > 0.70):** Alerta crítica de susceptibilidad a ansiedad severa. Recomienda de forma urgente consultar con el departamento de bienestar estudiantil o psicólogos profesionales.
+
+El endpoint asocia dinámicamente estas recomendaciones (almacenadas de forma inicial en SQLite) mediante una relación de muchos a muchos (`ResultadoML.recomendaciones`) y las retorna al cliente en formato JSON listo para visualizar.
