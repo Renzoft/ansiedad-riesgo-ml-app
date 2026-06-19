@@ -11,6 +11,7 @@ from app.routes.auth_routes import auth_bp  # Rutas de autenticación
 from dotenv import load_dotenv  # Manejo de variables de entorno
 from flask_migrate import Migrate
 
+
 # Importar modelos para que SQLAlchemy/Migrate los detecte
 from app.models.evaluacion import Evaluacion
 from app.models.resultado_ml import ResultadoML
@@ -18,6 +19,7 @@ from app.models.recomendacion import Recomendacion, resultado_recomendaciones
 
 from app.routes.evaluaciones_routes import evaluaciones_bp  # Rutas de evaluaciones
 from app.routes.admin_routes import admin_bp  # Rutas administrativas
+from app.routes.medico_routes import medico_bp  # Rutas para médicos
 
 migrate = Migrate()  # Manejo de migraciones
 jwt = JWTManager()  # Manejo de JWT(JSON Web Tokens)
@@ -29,6 +31,7 @@ def crear_app():
     """
     load_dotenv()  # Carga las variables de entorno
     app = Flask(__name__)
+    
 
     # ==========================================
     # CONFIGURACIÓN DE LA BASE DE DATOS
@@ -56,6 +59,7 @@ def crear_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(evaluaciones_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(medico_bp)
 
     # ==========================================
     # COMANDOS CLI

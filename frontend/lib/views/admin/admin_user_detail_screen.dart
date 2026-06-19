@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../services/api_service.dart';
@@ -166,7 +166,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
         actions: [
           if (_usuario != null) ...[
             IconButton(
-              icon: PhosphorIcon(PhosphorIcons.pencil(), color: colors.primary),
+              icon: PhosphorIcon(PhosphorIcons.pencil, color: colors.primary),
               onPressed: _abrirFormEditar,
               tooltip: 'Editar Usuario',
             ),
@@ -208,7 +208,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           PhosphorIcon(
-            PhosphorIcons.warning(),
+            PhosphorIcons.warning,
             size: 48,
             color: colors.iconMuted,
           ),
@@ -291,27 +291,27 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
           ),
           const SizedBox(height: 16),
           // Datos
-          _buildInfoRow(colors, PhosphorIcons.envelope(), 'Correo', u['correo'] ?? ''),
+          _buildInfoRow(colors, PhosphorIcons.envelope, 'Correo', u['correo'] ?? ''),
           if (esEstudiante &&
               u['facultad'] != null &&
               (u['facultad'] as String).isNotEmpty)
             _buildInfoRow(
               colors,
-              PhosphorIcons.building(),
+              PhosphorIcons.building,
               'Facultad',
               u['facultad'],
             ),
           if (esEstudiante && u['ciclo'] != null)
             _buildInfoRow(
               colors,
-              PhosphorIcons.hash(),
+              PhosphorIcons.hash,
               'Ciclo',
               u['ciclo'].toString(),
             ),
           if (u['fecha_registro'] != null)
             _buildInfoRow(
               colors,
-              PhosphorIcons.calendar(),
+              PhosphorIcons.calendar,
               'Registrado',
               _formatFecha(u['fecha_registro']),
             ),
@@ -328,7 +328,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   PhosphorIcon(
-                    PhosphorIcons.clipboardText(),
+                    PhosphorIcons.clipboardText,
                     size: 18,
                     color: colors.primary,
                   ),
@@ -387,7 +387,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
         Row(
           children: [
             PhosphorIcon(
-              PhosphorIcons.clipboardText(),
+              PhosphorIcons.clipboardText,
               size: 20,
               color: colors.primary,
             ),
@@ -414,7 +414,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
             child: Column(
               children: [
                 PhosphorIcon(
-                  PhosphorIcons.clipboardText(),
+                  PhosphorIcons.clipboardText,
                   size: 40,
                   color: colors.iconMuted,
                 ),
@@ -548,11 +548,11 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
   IconData _getRolIcon(String rol) {
     switch (rol) {
       case 'Admin':
-        return PhosphorIcons.shieldCheck();
+        return PhosphorIcons.shieldCheck;
       case 'Medico':
-        return PhosphorIcons.stethoscope();
+        return PhosphorIcons.stethoscope;
       default:
-        return PhosphorIcons.graduationCap();
+        return PhosphorIcons.graduationCap;
     }
   }
 

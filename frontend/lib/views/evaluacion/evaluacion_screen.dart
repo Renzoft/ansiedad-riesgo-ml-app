@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
 import '../../viewmodels/evaluacion_viewmodel.dart';
 
 class Pregunta {
@@ -324,15 +325,15 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: AppColors.of(context).primaryLight,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 'Seleccionado: ${value.toStringAsFixed(0)} ${pregunta.unidad}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF6366F1),
+                  color: AppColors.of(context).primary,
                 ),
               ),
             ),
@@ -355,13 +356,13 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                   label: Text(
                     '$index ${index == 1 ? "día" : "días"}',
                     style: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFF475569),
+                      color: isSelected ? Colors.white : AppColors.of(context).textPrimary,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                   selected: isSelected,
                   selectedColor: const Color(0xFF6366F1),
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  backgroundColor: AppColors.of(context).chipBg,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
@@ -424,7 +425,7 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isSelected ? itemColor : const Color(0xFFF1F5F9),
+                      color: isSelected ? itemColor : AppColors.of(context).chipBg,
                       shape: BoxShape.circle,
                       boxShadow: isSelected
                           ? [
@@ -436,7 +437,7 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                             ]
                           : null,
                       border: Border.all(
-                        color: isSelected ? itemColor : const Color(0xFFCBD5E1),
+                        color: isSelected ? itemColor : AppColors.of(context).border,
                         width: 1.5,
                       ),
                     ),
@@ -446,7 +447,7 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : const Color(0xFF475569),
+                          color: isSelected ? Colors.white : AppColors.of(context).textPrimary,
                         ),
                       ),
                     ),
@@ -483,17 +484,19 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                   controller: _gpaController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.of(context).textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: '3.0',
+                    filled: true,
+                    fillColor: AppColors.of(context).inputBg,
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                      borderSide: BorderSide(color: AppColors.of(context).inputBorder, width: 1.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -536,15 +539,15 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
     final double progreso = (_currentPage + 1) / _preguntas.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.of(context).background,
       appBar: AppBar(
         title: const Text(
           'Evaluación de Bienestar',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.of(context).surface,
+        foregroundColor: AppColors.of(context).textPrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -563,7 +566,7 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
             // BARRA DE PROGRESO SUPERIOR
             // ==========================================
             Container(
-              color: Colors.white,
+              color: AppColors.of(context).surface,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Column(
                 children: [
@@ -572,7 +575,7 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                     child: LinearProgressIndicator(
                       value: progreso,
                       minHeight: 6,
-                      backgroundColor: const Color(0xFFE2E8F0),
+                      backgroundColor: AppColors.of(context).borderLight,
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         Color(0xFF6366F1),
                       ),
@@ -592,9 +595,9 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                       ),
                       Text(
                         'Progreso: ${(progreso * 100).toStringAsFixed(0)}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: AppColors.of(context).textTertiary,
                         ),
                       ),
                     ],
@@ -634,8 +637,8 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                             // Icono temático
                             Container(
                               padding: const EdgeInsets.all(16),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEEF2FF),
+                              decoration: BoxDecoration(
+                                color: AppColors.of(context).primaryLight,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -649,10 +652,10 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                             // Título de la variable
                             Text(
                               pregunta.titulo,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF94A3B8),
+                                color: AppColors.of(context).textSecondary,
                                 letterSpacing: 1,
                               ),
                               textAlign: TextAlign.center,
@@ -662,10 +665,10 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                             // Pregunta principal
                             Text(
                               pregunta.pregunta,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.of(context).textPrimary,
                                 height: 1.4,
                               ),
                               textAlign: TextAlign.center,
@@ -675,16 +678,16 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
                             // Descripción explicativa
                             Text(
                               pregunta.descripcion,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF64748B),
+                                color: AppColors.of(context).textTertiary,
                                 height: 1.4,
                               ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
 
-                            const Divider(color: Color(0xFFF1F5F9)),
+                            Divider(color: AppColors.of(context).divider),
 
                             // Campo de respuesta interactivo
                             _buildAnswerInput(pregunta),
@@ -703,7 +706,7 @@ class _EvaluacionScreenState extends State<EvaluacionScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.of(context).surface,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.04),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../services/api_service.dart';
@@ -153,7 +153,7 @@ class _AdminUserFormState extends State<AdminUserForm> {
                 colors: colors,
                 controller: _nombreCtrl,
                 label: 'Nombre completo',
-                icon: PhosphorIcons.user(),
+                icon: PhosphorIcons.user,
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Campo requerido' : null,
               ),
@@ -162,7 +162,7 @@ class _AdminUserFormState extends State<AdminUserForm> {
                 colors: colors,
                 controller: _correoCtrl,
                 label: 'Correo electrónico',
-                icon: PhosphorIcons.envelope(),
+                icon: PhosphorIcons.envelope,
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Campo requerido';
@@ -176,7 +176,7 @@ class _AdminUserFormState extends State<AdminUserForm> {
                   colors: colors,
                   controller: _contrasenaCtrl,
                   label: 'Contraseña',
-                  icon: PhosphorIcons.lock(),
+                  icon: PhosphorIcons.lock,
                   obscureText: true,
                   validator: (v) {
                     if (_isEditing) return null;
@@ -226,14 +226,14 @@ class _AdminUserFormState extends State<AdminUserForm> {
                   colors: colors,
                   controller: _facultadCtrl,
                   label: 'Facultad',
-                  icon: PhosphorIcons.building(),
+                  icon: PhosphorIcons.building,
                 ),
                 const SizedBox(height: 16),
                 _buildField(
                   colors: colors,
                   controller: _cicloCtrl,
                   label: 'Ciclo',
-                  icon: PhosphorIcons.hash(),
+                  icon: PhosphorIcons.hash,
                   keyboardType: TextInputType.number,
                 ),
               ],

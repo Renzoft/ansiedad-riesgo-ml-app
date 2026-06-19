@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_icons.dart';
 import '../../constants/app_colors.dart';
@@ -115,8 +115,8 @@ class PerfilScreen extends StatelessWidget {
                             ),
                             child: PhosphorIcon(
                               themeNotifier.isDark
-                                  ? PhosphorIcons.moon()
-                                  : PhosphorIcons.sun(),
+                                  ? PhosphorIcons.moon
+                                  : PhosphorIcons.sun,
                               size: 20,
                               color: colors.primary,
                             ),
@@ -172,7 +172,7 @@ class PerfilScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildInfoCard(
                       colors: colors,
-                      icon: PhosphorIcons.calendar(),
+                      icon: PhosphorIcons.calendar,
                       label: 'Ciclo',
                       value: '$ciclo',
                     ),
@@ -181,7 +181,7 @@ class PerfilScreen extends StatelessWidget {
                 ],
                 _buildInfoCard(
                   colors: colors,
-                  icon: PhosphorIcons.envelope(),
+                  icon: PhosphorIcons.envelope,
                   label: 'Correo',
                   value: correo,
                 ),
@@ -215,7 +215,7 @@ class PerfilScreen extends StatelessWidget {
                       ),
                     ),
                     trailing: PhosphorIcon(
-                      PhosphorIcons.caretRight(),
+                      PhosphorIcons.caretRight,
                       size: 18,
                       color: colors.iconMuted,
                     ),

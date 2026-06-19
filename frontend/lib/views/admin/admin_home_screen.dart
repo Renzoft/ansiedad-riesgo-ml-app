@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_icons.dart';
 import '../../constants/app_colors.dart';
@@ -270,7 +270,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           children: [
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.usersThree(),
+              icon: PhosphorIcons.usersThree,
               accentColor: const Color(0xFF6366F1),
               label: 'Usuarios',
               value: totalUsuarios,
@@ -278,7 +278,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             const SizedBox(width: 12),
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.clipboardText(),
+              icon: PhosphorIcons.clipboardText,
               accentColor: const Color(0xFF059669),
               label: 'Evaluaciones',
               value: totalEvals,
@@ -290,7 +290,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           children: [
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.graduationCap(),
+              icon: PhosphorIcons.graduationCap,
               accentColor: const Color(0xFF3B82F6),
               label: 'Estudiantes',
               value: usuariosPorRol?['estudiantes'] ?? 0,
@@ -298,7 +298,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             const SizedBox(width: 12),
             _buildStatCard(
               colors: colors,
-              icon: PhosphorIcons.stethoscope(),
+              icon: PhosphorIcons.stethoscope,
               accentColor: const Color(0xFFF59E0B),
               label: 'Médicos',
               value: usuariosPorRol?['medicos'] ?? 0,
@@ -450,7 +450,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               PhosphorIcon(
-                                PhosphorIcons.chartPieSlice(),
+                                PhosphorIcons.chartPieSlice,
                                 size: 40,
                                 color: colors.iconMuted,
                               ),
@@ -524,7 +524,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         child: Column(
                           children: [
                             PhosphorIcon(
-                              PhosphorIcons.chartBar(),
+                              PhosphorIcons.chartBar,
                               size: 40,
                               color: colors.iconMuted,
                             ),
@@ -604,7 +604,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           children: [
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.users(),
+              icon: PhosphorIcons.users,
               color: const Color(0xFF3B82F6),
               label: 'Gestionar\nUsuarios',
               onTap: () {
@@ -617,7 +617,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             const SizedBox(width: 12),
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.userGear(),
+              icon: PhosphorIcons.userGear,
               color: const Color(0xFFF59E0B),
               label: 'Mi\nPerfil',
               onTap: () {
@@ -709,7 +709,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             child: Column(
               children: [
                 PhosphorIcon(
-                  PhosphorIcons.userPlus(),
+                  PhosphorIcons.userPlus,
                   size: 40,
                   color: colors.iconMuted,
                 ),
@@ -857,7 +857,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: PhosphorIcon(
-                        PhosphorIcons.plus(),
+                        PhosphorIcons.plus,
                         size: 20,
                         color: colors.primary,
                       ),
@@ -929,7 +929,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => _abrirFormUsuario(null),
-                    icon: PhosphorIcon(PhosphorIcons.plus(), size: 18),
+                    icon: PhosphorIcon(PhosphorIcons.plus, size: 18),
                     label: const Text('Crear Usuario'),
                   ),
                 ],
@@ -1006,17 +1006,17 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                 contentPadding: EdgeInsets.zero,
                               )),
                               PopupMenuItem(value: 'rol_Estudiante', child: ListTile(
-                                leading: PhosphorIcon(PhosphorIcons.graduationCap(), size: 20),
+                                leading: PhosphorIcon(PhosphorIcons.graduationCap, size: 20),
                                 title: const Text('Rol: Estudiante'),
                                 contentPadding: EdgeInsets.zero,
                               )),
                               PopupMenuItem(value: 'rol_Medico', child: ListTile(
-                                leading: PhosphorIcon(PhosphorIcons.stethoscope(), size: 20),
+                                leading: PhosphorIcon(PhosphorIcons.stethoscope, size: 20),
                                 title: const Text('Rol: Médico'),
                                 contentPadding: EdgeInsets.zero,
                               )),
                               PopupMenuItem(value: 'rol_Admin', child: ListTile(
-                                leading: PhosphorIcon(PhosphorIcons.shieldCheck(), size: 20),
+                                leading: PhosphorIcon(PhosphorIcons.shieldCheck, size: 20),
                                 title: const Text('Rol: Admin'),
                                 contentPadding: EdgeInsets.zero,
                               )),
@@ -1027,7 +1027,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                 contentPadding: EdgeInsets.zero,
                               )),
                             ],
-                            icon: PhosphorIcon(PhosphorIcons.dotsThreeVertical(),
+                            icon: PhosphorIcon(PhosphorIcons.dotsThreeVertical,
                                 size: 20, color: colors.iconMuted),
                           ),
                           onTap: () => _abrirDetalle(usuario),
@@ -1136,11 +1136,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   IconData _getRolIcon(String rol) {
     switch (rol) {
       case 'Admin':
-        return PhosphorIcons.shieldCheck();
+        return PhosphorIcons.shieldCheck;
       case 'Medico':
-        return PhosphorIcons.stethoscope();
+        return PhosphorIcons.stethoscope;
       default:
-        return PhosphorIcons.graduationCap();
+        return PhosphorIcons.graduationCap;
     }
   }
 
