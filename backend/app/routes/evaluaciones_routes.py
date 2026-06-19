@@ -2,7 +2,7 @@
 Rutas para Evaluación de Riesgo de Ansiedad
 Blueprint: evaluaciones_bp (prefijo /api/v1/evaluaciones)
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.usuario import db, Usuario
 from app.models.evaluacion import Evaluacion
@@ -14,11 +14,6 @@ from app.utils.decorators import role_required
 from app.services.ml_service import predictor
 
 evaluaciones_bp = Blueprint("evaluaciones", __name__, url_prefix="/api/v1/evaluaciones")
-# ==========================================
-# NUEVO
-# Servicio Gemini
-# ==========================================
-from app.services.gemini_service import gemini_service
 
 # =========================
 # RANGOS VÁLIDOS PARA LAS 15 VARIABLES
@@ -153,12 +148,25 @@ def realizar_evaluacion():
 
         # ==========================================
         # NUEVO
-        # Generar reporte inteligente con Gemini
+        # Generar reporte inteligente con Gemini desde la extensión de Flask
         # ==========================================
-
-        reporte_ia = gemini_service.generar_reporte(
-            nivel_riesgo=nivel_riesgo, probabilidad=probabilidad, variables=valores
-        )
+        gemini_service = current_app.extensions.get("gemini")
+        if gemini_service:
+            reporte_ia = gemini_service.generar_reporte(
+                nivel_riesgo=nivel_riesgo, probabilidad=probabilidad, variables=valores
+            )
+        else:
+            reporte_ia = {
+                "resumen": "Servicio de recomendaciones de IA no disponible temporalmente.",
+                "fortalezas": [],
+                "factores_preocupantes": [],
+                "recomendaciones": [],
+                "plan_7_dias": [],
+                "temas_videos": [],
+                "temas_lectura": [],
+                "prioridad_intervencion": "NO DISPONIBLE",
+                "mensaje_motivacional": "Continúa cuidando tu bienestar."
+            }
 
         # 7. Crear y guardar registro en tabla 'resultados_ml'
         nuevo_resultado = ResultadoML(

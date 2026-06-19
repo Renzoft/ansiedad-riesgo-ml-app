@@ -2,13 +2,17 @@
 Módulo principal - Application Factory
 """
 import os  # Manejo de variables de entorno
+from dotenv import load_dotenv  # Manejo de variables de entorno
+
+# Cargar variables de entorno al inicio, antes de cualquier importación local
+load_dotenv()
+
 from flask import Flask  # Clase principal para crear la app
 from flask_jwt_extended import JWTManager  # Manejo de JWT(JSON Web Tokens)
 from datetime import timedelta  # Expiración de tokens
 
 from app.models.usuario import db, bcrypt  # Modelo de usuario + extensiones
 from app.routes.auth_routes import auth_bp  # Rutas de autenticación
-from dotenv import load_dotenv  # Manejo de variables de entorno
 from flask_migrate import Migrate
 
 
@@ -20,16 +24,17 @@ from app.models.recomendacion import Recomendacion, resultado_recomendaciones
 from app.routes.evaluaciones_routes import evaluaciones_bp  # Rutas de evaluaciones
 from app.routes.admin_routes import admin_bp  # Rutas administrativas
 from app.routes.medico_routes import medico_bp  # Rutas para médicos
+from app.services.gemini_service import GeminiService
 
 migrate = Migrate()  # Manejo de migraciones
 jwt = JWTManager()  # Manejo de JWT(JSON Web Tokens)
+gemini_service = GeminiService()  # Extensión personalizada de Gemini
 
 
 def crear_app():
     """
     Función para crear la app
     """
-    load_dotenv()  # Carga las variables de entorno
     app = Flask(__name__)
     
 
@@ -46,12 +51,19 @@ def crear_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
 
     # ==========================================
+    # CONFIGURACIÓN DE GEMINI API
+    # ==========================================
+    app.config["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
+    app.config["GEMINI_MODEL"] = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+    # ==========================================
     # INICIALIZACIÓN DE EXTENSIONES
     # ==========================================
     db.init_app(app)  # Inicialización de la base de datos
     bcrypt.init_app(app)  # Inicialización de la encriptación de contraseñas
     jwt.init_app(app)  # Inicialización de JWT(JSON Web Tokens)
     migrate.init_app(app, db)  # Inicialización de migraciones
+    gemini_service.init_app(app)  # Inicialización de la extensión de Gemini
 
     # ==========================================
     # REGISTRO DE BLUEPRINTS
