@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/medico_viewmodel.dart';
+import 'medico_paciente_detail_screen.dart';
 import '../../widgets/animated_counter.dart';
 import '../../widgets/animated_donut_chart.dart';
 
@@ -887,6 +888,19 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
                         ],
                       ),
                       child: ListTile(
+                        onTap: () {
+                          final idUsuario = paciente['id_usuario'];
+                          if (idUsuario != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MedicoPacienteDetailScreen(
+                                  userId: idUsuario is int ? idUsuario : int.parse(idUsuario.toString()),
+                                ),
+                              ),
+                            );
+                          }
+                        },
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                         leading: CircleAvatar(
                           radius: 20,
