@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 
 /// Servicio genérico para realizar llamadas HTTP al backend
 class ApiService {
@@ -24,13 +24,17 @@ class ApiService {
 
   /// Realiza una petición GET
   Future<Map<String, dynamic>> get(String url) async {
-    final response = await http.get(Uri.parse(url), headers: _headers());
+    final response = await http
+        .get(Uri.parse(url), headers: _headers())
+        .timeout(const Duration(seconds: 15));
     return _procesarRespuesta(response);
   }
 
   /// Realiza una petición GET que devuelve una lista
   Future<List<dynamic>> getList(String url) async {
-    final response = await http.get(Uri.parse(url), headers: _headers());
+    final response = await http
+        .get(Uri.parse(url), headers: _headers())
+        .timeout(const Duration(seconds: 15));
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
     }
@@ -46,11 +50,13 @@ class ApiService {
     Map<String, dynamic>? body,
     bool withAuth = true,
   }) async {
-    final response = await http.post(
-      Uri.parse(url),
-      headers: _headers(withAuth: withAuth),
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await http
+        .post(
+          Uri.parse(url),
+          headers: _headers(withAuth: withAuth),
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(const Duration(seconds: 15));
     return _procesarRespuesta(response);
   }
 
@@ -59,17 +65,21 @@ class ApiService {
     String url, {
     Map<String, dynamic>? body,
   }) async {
-    final response = await http.put(
-      Uri.parse(url),
-      headers: _headers(),
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await http
+        .put(
+          Uri.parse(url),
+          headers: _headers(),
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(const Duration(seconds: 15));
     return _procesarRespuesta(response);
   }
 
   /// Realiza una petición DELETE
   Future<Map<String, dynamic>> delete(String url) async {
-    final response = await http.delete(Uri.parse(url), headers: _headers());
+    final response = await http
+        .delete(Uri.parse(url), headers: _headers())
+        .timeout(const Duration(seconds: 15));
     return _procesarRespuesta(response);
   }
 

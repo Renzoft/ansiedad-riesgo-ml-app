@@ -1,43 +1,129 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
+
 /// Configuración de la API del backend
+///
+/// Detecta automáticamente la URL base según el entorno:
+/// - Web: localhost
+/// - Emulador Android: 10.0.2.2
+/// - iOS Simulator: localhost
+/// - Dispositivo físico: IP de red local o configuración manual
+/// - Producción: variable de entorno o URL configurada
 class ApiConfig {
-  // Para emulador Android usar 10.0.2.2
-  // Para dispositivo físico usar la IP local del servidor
-  static const String baseUrl = 'http://10.0.2.2:5000';
+  // ==========================================
+  // CONSTANTES
+  // ==========================================
+  static const String _defaultPort = '5000';
+  static const String _prefsKey = 'api_base_url';
+
+  // ==========================================
+  // URL BASE DETECTADA AUTOMÁTICAMENTE
+  // ==========================================
+  static String _baseUrl = _detectarBaseUrl();
+  static bool _inicializado = false;
+
+  /// Inicializa la configuración cargando la URL guardada (si existe)
+  static Future<void> init() async {
+    if (_inicializado) return;
+    final prefs = await SharedPreferences.getInstance();
+    final guardada = prefs.getString(_prefsKey);
+    if (guardada != null && guardada.isNotEmpty) {
+      _baseUrl = guardada;
+    }
+    _inicializado = true;
+  }
+
+  /// Obtiene la URL base actual
+  static String get baseUrl => _baseUrl;
+
+  /// Cambia la URL base y la persiste
+  static Future<void> setBaseUrl(String nuevaUrl) async {
+    // Limpiar la URL: quitar barra al final si la tiene
+    _baseUrl = nuevaUrl.replaceAll(RegExp(r'/+$'), '');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, _baseUrl);
+  }
+
+  /// Restablece la URL base a la detectada automáticamente
+  static Future<void> resetBaseUrl() async {
+    _baseUrl = _detectarBaseUrl();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsKey);
+  }
+
+  /// Detecta la URL base según la plataforma
+  static String _detectarBaseUrl() {
+    // Si estamos en un navegador web
+    if (kIsWeb) {
+      // En web, el backend puede estar en el mismo host o en localhost
+      return 'http://localhost:$_defaultPort';
+    }
+
+    try {
+      if (Platform.isAndroid) {
+        // En emulador Android, 10.0.2.2 apunta al host local de la máquina
+        // En dispositivo físico, se necesita la IP real del servidor
+        return 'http://10.0.2.2:$_defaultPort';
+      } else if (Platform.isIOS) {
+        // En iOS Simulator, localhost funciona directamente
+        // En dispositivo físico, se necesita la IP real del servidor
+        return 'http://localhost:$_defaultPort';
+      } else if (Platform.isMacOS) {
+        return 'http://localhost:$_defaultPort';
+      } else if (Platform.isWindows) {
+        return 'http://localhost:$_defaultPort';
+      } else if (Platform.isLinux) {
+        return 'http://localhost:$_defaultPort';
+      }
+    } catch (_) {
+      // Si hay algún error al detectar la plataforma, usar localhost
+    }
+
+    return 'http://localhost:$_defaultPort';
+  }
 
   // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN
   // ==========================================
-  static const String registro = '$baseUrl/registro';
-  static const String login = '$baseUrl/login';
+  static String get registro => '$_baseUrl/registro';
+  static String get login => '$_baseUrl/login';
 
   // ==========================================
   // ENDPOINTS DE EVALUACIONES
   // ==========================================
-  static const String evaluar = '$baseUrl/api/v1/evaluaciones/';
-  static const String historialEvaluaciones =
-      '$baseUrl/api/v1/evaluaciones/historial';
+  static String get evaluar => '$_baseUrl/api/v1/evaluaciones/';
+  static String get historialEvaluaciones =>
+      '$_baseUrl/api/v1/evaluaciones/historial';
 
   // ==========================================
   // ENDPOINTS DE HÁBITOS
   // ==========================================
-  static const String habitos = '$baseUrl/habitos';
-  static const String ultimoHabito = '$baseUrl/habitos/ultimo';
+  static String get habitos => '$_baseUrl/habitos';
+  static String get ultimoHabito => '$_baseUrl/habitos/ultimo';
 
   // ==========================================
   // ENDPOINTS DE ADMIN
   // ==========================================
-  static const String adminUsuarios = '$baseUrl/api/v1/admin/usuarios';
-  static const String adminEstadisticas = '$baseUrl/api/v1/admin/usuarios/estadisticas';
+  static String get adminUsuarios => '$_baseUrl/api/v1/admin/usuarios';
+  static String get adminEstadisticas =>
+      '$_baseUrl/api/v1/admin/usuarios/estadisticas';
 
-  static String adminUsuarioById(int id) => '$baseUrl/api/v1/admin/usuarios/$id';
-  static String adminCambiarRol(int id) => '$baseUrl/api/v1/admin/usuarios/$id/rol';
-  static String adminEvaluacionById(int id) => '$baseUrl/api/v1/admin/evaluaciones/$id';
+  static String adminUsuarioById(int id) =>
+      '$_baseUrl/api/v1/admin/usuarios/$id';
+  static String adminCambiarRol(int id) =>
+      '$_baseUrl/api/v1/admin/usuarios/$id/rol';
+  static String adminEvaluacionById(int id) =>
+      '$_baseUrl/api/v1/admin/evaluaciones/$id';
 
   // ==========================================
   // ENDPOINTS DE MÉDICO
   // ==========================================
-  static const String medicoPacientes = '$baseUrl/api/v1/medico/pacientes';
-  static const String medicoEstadisticas = '$baseUrl/api/v1/medico/estadisticas';
-  static const String medicoEvaluacionesRecientes = '$baseUrl/api/v1/medico/evaluaciones-recientes';
-  static String medicoPacienteDetalle(int id) => '$baseUrl/api/v1/medico/pacientes/$id/detalle';
+  static String get medicoPacientes => '$_baseUrl/api/v1/medico/pacientes';
+  static String get medicoEstadisticas =>
+      '$_baseUrl/api/v1/medico/estadisticas';
+  static String get medicoEvaluacionesRecientes =>
+      '$_baseUrl/api/v1/medico/evaluaciones-recientes';
+  static String medicoPacienteDetalle(int id) =>
+      '$_baseUrl/api/v1/medico/pacientes/$id/detalle';
 }

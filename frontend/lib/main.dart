@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 // Services
 import 'services/api_service.dart';
 
+// Config
+import 'config/api_config.dart';
+
 // ViewModels
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/evaluacion_viewmodel.dart';
@@ -24,7 +27,10 @@ import 'views/evaluacion/resultado_screen.dart';
 import 'views/evaluacion/historial_screen.dart';
 import 'views/perfil/perfil_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Inicializar configuración de API (cargar URL guardada)
+  await ApiConfig.init();
   runApp(const AnsiedadApp());
 }
 
