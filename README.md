@@ -305,7 +305,7 @@ Asegúrate de realizar los pasos desde una terminal de **Git Bash** dentro de VS
 5. **Crea el archivo `.env`** en la raíz de `backend/` con el siguiente contenido:
    ```
    JWT_SECRET_KEY=tu_clave_secreta_aqui
-   GEMINI_API_KEY=tu_clave_gemini_aqui
+   GEMINI_API_KEY=tu_clave_gemini_aqui (Debes ingresar a Google AI Studio para generarla)
    GEMINI_MODEL=gemini-2.5-flash
    
    ```
