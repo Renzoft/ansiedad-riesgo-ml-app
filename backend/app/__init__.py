@@ -8,6 +8,7 @@ from dotenv import load_dotenv  # Manejo de variables de entorno
 load_dotenv()
 
 from flask import Flask  # Clase principal para crear la app
+from flask_cors import CORS  # CORS para permitir conexiones desde cualquier origen
 from flask_jwt_extended import JWTManager  # Manejo de JWT(JSON Web Tokens)
 from datetime import timedelta  # Expiración de tokens
 
@@ -37,6 +38,11 @@ def crear_app():
     """
     app = Flask(__name__)
     
+    # ==========================================
+    # CONFIGURACIÓN DE CORS
+    # ==========================================
+    # Permite conexiones desde cualquier origen (desarrollo local, producción, etc.)
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
     # ==========================================
     # CONFIGURACIÓN DE LA BASE DE DATOS
