@@ -51,19 +51,29 @@ class EvaluacionViewModel extends ChangeNotifier {
       _explicacion = response['explicacion'] as String?;
 
       if (response['recomendaciones'] != null) {
-        _recomendaciones =
-            (response['recomendaciones'] as List<dynamic>)
-                .map((r) => Recomendacion.fromJson(r))
-                .toList();
+        _recomendaciones = (response['recomendaciones'] as List<dynamic>)
+            .map((r) => Recomendacion.fromJson(r))
+            .toList();
       }
 
       _ultimoResultado = ResultadoMl.fromJson({
         'id_resultado': response['id_evaluacion'] ?? 0,
+
         'id_evaluacion': response['id_evaluacion'] ?? 0,
+
         'id_usuario': 0,
+
         'probabilidad_ansiedad': _probabilidad ?? 0,
+
         'nivel_riesgo': _nivelRiesgo ?? '',
+
         'recomendaciones': response['recomendaciones'] ?? [],
+
+        // ==========================================
+        // NUEVO
+        // Reporte generado por Gemini
+        // ==========================================
+        'reporte_ia': response['reporte_ia'],
       });
 
       _isLoading = false;
@@ -89,8 +99,7 @@ class EvaluacionViewModel extends ChangeNotifier {
 
     try {
       final data = await _apiService.getList(ApiConfig.historialEvaluaciones);
-      _historial =
-          data.map((json) => Evaluacion.fromJson(json)).toList();
+      _historial = data.map((json) => Evaluacion.fromJson(json)).toList();
       _isLoading = false;
       notifyListeners();
     } catch (e) {

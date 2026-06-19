@@ -11,6 +11,7 @@ from app.routes.auth_routes import auth_bp  # Rutas de autenticación
 from dotenv import load_dotenv  # Manejo de variables de entorno
 from flask_migrate import Migrate
 
+
 # Importar modelos para que SQLAlchemy/Migrate los detecte
 from app.models.evaluacion import Evaluacion
 from app.models.resultado_ml import ResultadoML
@@ -30,6 +31,7 @@ def crear_app():
     """
     load_dotenv()  # Carga las variables de entorno
     app = Flask(__name__)
+    
 
     # ==========================================
     # CONFIGURACIÓN DE LA BASE DE DATOS
