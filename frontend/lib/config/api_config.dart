@@ -2,7 +2,7 @@
 class ApiConfig {
   // Para emulador Android usar 10.0.2.2
   // Para dispositivo físico usar la IP local del servidor
-  static const String baseUrl = 'http://10.0.2.2:5000';
+  static const String baseUrl = 'http://127.0.0.1:5000';
 
   // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN

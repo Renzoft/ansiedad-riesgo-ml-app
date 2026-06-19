@@ -13,8 +13,16 @@ from app.utils.roles import ROLE_ESTUDIANTE, ROLE_MEDICO, ROLE_ADMIN
 from app.utils.decorators import role_required
 from flask import request
 from datetime import datetime, timedelta, timezone
+from app.services.ml_service import predictor
 
 evaluaciones_bp = Blueprint("evaluaciones", __name__, url_prefix="/api/v1/evaluaciones")
+
+
+# ==========================================
+# NUEVO
+# Servicio Gemini
+# ==========================================
+from app.services.gemini_service import gemini_service
 
 # =========================
 # RANGOS VÁLIDOS PARA LAS 15 VARIABLES
@@ -143,9 +151,19 @@ def realizar_evaluacion():
         # 5. Construir vector y ejecutar predicción ML
         vector = nueva_evaluacion.to_vector()
         probabilidad = predictor.predecir(vector)
-
         # 6. Categorizar riesgo
         nivel_riesgo, explicacion = _categorizar_riesgo(probabilidad)
+
+        # ==========================================
+        # NUEVO
+        # Generar reporte inteligente con Gemini
+        # ==========================================
+
+        reporte_ia = gemini_service.generar_reporte(
+        nivel_riesgo=nivel_riesgo,
+        probabilidad=probabilidad,
+        variables=valores
+        )
 
         # 7. Crear y guardar registro en tabla 'resultados_ml'
         nuevo_resultado = ResultadoML(
@@ -172,7 +190,15 @@ def realizar_evaluacion():
             "nivel_riesgo": nivel_riesgo,
             "explicacion": explicacion,
             "fecha_realizacion": nueva_evaluacion.fecha_realizacion.isoformat(),
-            "recomendaciones": [r.to_dict() for r in recomendaciones]
+            # ==========================================
+            # Recomendaciones actuales de BD
+            # ==========================================
+            "recomendaciones": [r.to_dict() for r in recomendaciones],
+            # ==========================================
+            # NUEVO
+            # Análisis generado por Gemini
+            # ==========================================
+            "reporte_ia": reporte_ia,
         }
 
         return jsonify(respuesta), 201

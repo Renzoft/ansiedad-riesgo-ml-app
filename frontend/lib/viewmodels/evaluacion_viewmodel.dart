@@ -57,13 +57,24 @@ class EvaluacionViewModel extends ChangeNotifier {
                 .toList();
       }
 
-      _ultimoResultado = ResultadoMl.fromJson({
+ _ultimoResultado = ResultadoMl.fromJson({
         'id_resultado': response['id_evaluacion'] ?? 0,
+
         'id_evaluacion': response['id_evaluacion'] ?? 0,
+
         'id_usuario': 0,
+
         'probabilidad_ansiedad': _probabilidad ?? 0,
+
         'nivel_riesgo': _nivelRiesgo ?? '',
+
         'recomendaciones': response['recomendaciones'] ?? [],
+
+        // ==========================================
+        // NUEVO
+        // Reporte generado por Gemini
+        // ==========================================
+        'reporte_ia': response['reporte_ia'],
       });
 
       _isLoading = false;

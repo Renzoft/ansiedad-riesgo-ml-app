@@ -10,6 +10,7 @@ from app.models.usuario import db, bcrypt  # Modelo de usuario + extensiones
 from app.routes.auth_routes import auth_bp  # Rutas de autenticación
 from dotenv import load_dotenv  # Manejo de variables de entorno
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 # Importar modelos para que SQLAlchemy/Migrate los detecte
 from app.models.evaluacion import Evaluacion
@@ -30,6 +31,7 @@ def crear_app():
     """
     load_dotenv()  # Carga las variables de entorno
     app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # ==========================================
     # CONFIGURACIÓN DE LA BASE DE DATOS
