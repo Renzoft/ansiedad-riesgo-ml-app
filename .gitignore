@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.env
+
+# Flutter/Dart
+frontend/.dart_tool/
+frontend/.packages
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/.idea/
+
+# Base de datos local
+backend/instance/
+*.db
+
+# Modelos ML (grandes)
+*.pkl
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
