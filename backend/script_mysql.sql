@@ -70,6 +70,7 @@ CREATE TABLE resultados_ml (
     probabilidad_ansiedad   FLOAT       NOT NULL,
     nivel_riesgo            VARCHAR(20) NOT NULL COMMENT 'BAJO, MEDIO, ALTO',
     fecha_prediccion        DATETIME    DEFAULT CURRENT_TIMESTAMP,
+    reporte_ia              TEXT        DEFAULT NULL COMMENT 'JSON con el reporte generado por Gemini',
 
     PRIMARY KEY (id_resultado),
     UNIQUE KEY uq_id_evaluacion (id_evaluacion),

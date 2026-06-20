@@ -14,6 +14,14 @@ config = context.config
 fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
+# Importar la aplicación Flask para crear el contexto
+from app import crear_app
+app = crear_app()
+
+# Crear el contexto de la aplicación para acceder a current_app
+app_context = app.app_context()
+app_context.push()
+
 
 def get_engine():
     try:

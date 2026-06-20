@@ -525,30 +525,6 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _buildActionCard(
-              colors: colors,
-              icon: PhosphorIcons.heartbeat,
-              color: const Color(0xFFF59E0B),
-              label: 'Recomen-\ndaciones',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Recomendaciones disponibles en cada evaluación'),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: colors.primary,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 12),
-            // Espacio vacío para mantener el layout
-            const Expanded(child: SizedBox.shrink()),
-          ],
-        ),
       ],
     );
   }

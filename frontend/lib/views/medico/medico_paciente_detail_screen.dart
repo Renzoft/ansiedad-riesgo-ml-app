@@ -409,8 +409,18 @@ class _MedicoPacienteDetailScreenState
     final fecha = eval['fecha_realizacion'] as String? ?? '';
     final explicacion = resultado?['explicacion'] as String?;
 
-    // Obtener recomendaciones si existen
-    final recomendaciones = resultado?['recomendaciones'] as List<dynamic>?;
+    // Obtener recomendaciones de BD
+    final recomendacionesBD = resultado?['recomendaciones'] as List<dynamic>?;
+
+    // Obtener recomendaciones del reporte_ia (Gemini) - tienen prioridad
+    final reporteIA = resultado?['reporte_ia'] as Map<String, dynamic>?;
+    final recomendacionesIA = reporteIA?['recomendaciones'] as List<dynamic>?;
+
+    // Usar recomendaciones de IA si existen y no están vacías, sino usar las de BD
+    final recomendaciones = (recomendacionesIA != null && recomendacionesIA.isNotEmpty)
+        ? recomendacionesIA
+        : recomendacionesBD;
+    final esRecomendacionIA = recomendacionesIA != null && recomendacionesIA.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -491,47 +501,87 @@ class _MedicoPacienteDetailScreenState
 
           // Recomendaciones
           if (recomendaciones != null && recomendaciones.isNotEmpty) ...[
-            Text(
-              'Recomendaciones:',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
-              ),
+            Row(
+              children: [
+                Text(
+                  esRecomendacionIA ? 'Recomendaciones (IA):' : 'Recomendaciones:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: esRecomendacionIA ? const Color(0xFF8B5CF6) : colors.textPrimary,
+                  ),
+                ),
+                if (esRecomendacionIA) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Gemini',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF8B5CF6),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: 6),
             ...recomendaciones.map((rec) {
-              final recMap = rec as Map<String, dynamic>;
+              // Soporte para recomendaciones como String o como Map<String, dynamic>
+              String titulo;
+              String descripcion;
+
+              if (rec is String) {
+                titulo = esRecomendacionIA ? 'Recomendación' : 'Recomendación';
+                descripcion = rec;
+              } else {
+                final recMap = rec as Map<String, dynamic>;
+                titulo = esRecomendacionIA
+                    ? (recMap['titulo'] ?? recMap['categoria'] ?? 'Recomendación')
+                    : (recMap['titulo'] ?? '');
+                descripcion = esRecomendacionIA
+                    ? (recMap['descripcion'] ?? recMap['recomendacion'] ?? '')
+                    : (recMap['descripcion'] ?? '');
+              }
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     PhosphorIcon(
-                      PhosphorIcons.lightbulb,
+                      esRecomendacionIA ? PhosphorIcons.robot : PhosphorIcons.lightbulb,
                       size: 16,
-                      color: const Color(0xFFF59E0B),
+                      color: esRecomendacionIA ? const Color(0xFF8B5CF6) : const Color(0xFFF59E0B),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            recMap['titulo'] ?? '',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
+                          if (titulo.isNotEmpty && (rec is! String || !esRecomendacionIA))
+                            Text(
+                              titulo,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: esRecomendacionIA ? const Color(0xFF8B5CF6) : colors.textPrimary,
+                              ),
                             ),
-                          ),
-                          Text(
-                            recMap['descripcion'] ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.textSecondary,
+                          if (descripcion.isNotEmpty)
+                            Text(
+                              descripcion,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),

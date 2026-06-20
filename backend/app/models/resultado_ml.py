@@ -22,6 +22,7 @@ class ResultadoML(db.Model):
     probabilidad_ansiedad = db.Column(db.Float, nullable=False)
     nivel_riesgo = db.Column(db.String(20), nullable=False)  # 'BAJO', 'MEDIO', 'ALTO'
     fecha_prediccion = db.Column(db.DateTime, default=datetime.utcnow)
+    reporte_ia = db.Column(db.Text, nullable=True)  # JSON con el reporte generado por Gemini
 
     # =========================
     # RELACIÓN M:N CON RECOMENDACIONES
@@ -36,9 +37,10 @@ class ResultadoML(db.Model):
     def to_dict(self):
         """
         Convierte el objeto a un diccionario para JSON.
-        Incluye la lista de recomendaciones anidadas.
+        Incluye la lista de recomendaciones anidadas y el reporte_ia si existe.
         """
-        return {
+        import json
+        data = {
             "id_resultado": self.id_resultado,
             "id_evaluacion": self.id_evaluacion,
             "id_usuario": self.id_usuario,
@@ -47,3 +49,11 @@ class ResultadoML(db.Model):
             "fecha_prediccion": self.fecha_prediccion.isoformat() if self.fecha_prediccion else None,
             "recomendaciones": [r.to_dict() for r in self.recomendaciones]
         }
+        if self.reporte_ia:
+            try:
+                data["reporte_ia"] = json.loads(self.reporte_ia)
+            except (json.JSONDecodeError, TypeError):
+                data["reporte_ia"] = None
+        else:
+            data["reporte_ia"] = None
+        return data

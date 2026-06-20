@@ -150,12 +150,36 @@ def realizar_evaluacion():
         # NUEVO
         # Generar reporte inteligente con Gemini desde la extensión de Flask
         # ==========================================
+        import logging
+        logger = logging.getLogger(__name__)
+        
         gemini_service = current_app.extensions.get("gemini")
+        logger.info(f"Gemini service encontrado: {gemini_service is not None}")
+        
         if gemini_service:
-            reporte_ia = gemini_service.generar_reporte(
-                nivel_riesgo=nivel_riesgo, probabilidad=probabilidad, variables=valores
-            )
+            try:
+                logger.info("Intentando generar reporte con Gemini...")
+                reporte_ia = gemini_service.generar_reporte(
+                    nivel_riesgo=nivel_riesgo, probabilidad=probabilidad, variables=valores
+                )
+                logger.info(f"Reporte generado exitosamente. Tipo: {type(reporte_ia)}")
+                logger.info(f"¿Tiene recomendaciones? {len(reporte_ia.get('recomendaciones', [])) if isinstance(reporte_ia, dict) else 'N/A'}")
+            except Exception as e:
+                logger.error(f"Error al generar reporte con Gemini: {str(e)}", exc_info=True)
+                reporte_ia = {
+                    "resumen": "Error al generar reporte de IA.",
+                    "fortalezas": [],
+                    "factores_preocupantes": [],
+                    "recomendaciones": [],
+                    "plan_7_dias": [],
+                    "temas_videos": [],
+                    "temas_lectura": [],
+                    "prioridad_intervencion": "ERROR",
+                    "mensaje_motivacional": "Continúa cuidando tu bienestar.",
+                    "error": str(e)
+                }
         else:
+            logger.warning("Gemini service NO encontrado en current_app.extensions")
             reporte_ia = {
                 "resumen": "Servicio de recomendaciones de IA no disponible temporalmente.",
                 "fortalezas": [],
@@ -169,11 +193,14 @@ def realizar_evaluacion():
             }
 
         # 7. Crear y guardar registro en tabla 'resultados_ml'
+        import json
+        reporte_ia_json = json.dumps(reporte_ia) if reporte_ia else None
         nuevo_resultado = ResultadoML(
             id_evaluacion=nueva_evaluacion.id_evaluacion,
             id_usuario=usuario_id,
             probabilidad_ansiedad=probabilidad,
-            nivel_riesgo=nivel_riesgo
+            nivel_riesgo=nivel_riesgo,
+            reporte_ia=reporte_ia_json
         )
         db.session.add(nuevo_resultado)
         db.session.flush()  # Obtener id_resultado para asociar recomendaciones
