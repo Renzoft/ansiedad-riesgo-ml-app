@@ -1,8 +1,37 @@
 """
 Modelo de Evaluación - Almacena las 15 variables del test por cada evaluación rendida.
+Contiene lógica de negocio (MVC Model).
 """
 from app.models.usuario import db
 from datetime import datetime
+
+
+# Rangos válidos para las 15 variables
+RANGOS_VARIABLES = {
+    "phq9_score":        (0, 27),
+    "gad7_score":        (0, 21),
+    "sleep_hours":       (3.0, 10.0),
+    "exercise_freq":     (0, 7),
+    "social_activity":   (0, 10),
+    "online_stress":     (1, 10),
+    "gpa":               (0.0, 5.0),
+    "family_support":    (1, 10),
+    "screen_time":       (1.0, 12.0),
+    "academic_stress":   (1, 10),
+    "diet_quality":      (1, 10),
+    "self_efficacy":     (1, 10),
+    "peer_relationship": (1, 10),
+    "financial_stress":  (1, 10),
+    "sleep_quality":     (0, 10),
+}
+
+# Orden estricto de las variables para el vector ML
+ORDEN_VARIABLES = [
+    "phq9_score", "gad7_score", "sleep_hours", "exercise_freq",
+    "social_activity", "online_stress", "gpa", "family_support",
+    "screen_time", "academic_stress", "diet_quality", "self_efficacy",
+    "peer_relationship", "financial_stress", "sleep_quality"
+]
 
 
 class Evaluacion(db.Model):
@@ -92,3 +121,64 @@ class Evaluacion(db.Model):
             "resultado": self.resultado.to_dict() if self.resultado else None
         }
         return data
+
+    def to_dict_variables(self):
+        """
+        Retorna solo las variables como diccionario (sin metadatos).
+        Útil para enviar a servicios externos como Gemini.
+        """
+        return {var: getattr(self, var) for var in ORDEN_VARIABLES}
+
+    @classmethod
+    def crear_desde_data(cls, usuario_id, data):
+        """
+        Crea una instancia de Evaluacion validando los datos.
+        Lanza ValueError si algún campo es inválido.
+        """
+        valores = {}
+        for variable, (minimo, maximo) in RANGOS_VARIABLES.items():
+            valor = data.get(variable)
+
+            if valor is None:
+                raise ValueError(f"El campo '{variable}' es obligatorio")
+
+            try:
+                valor = float(valor)
+            except (ValueError, TypeError):
+                raise ValueError(f"El campo '{variable}' debe ser numérico")
+
+            if not (minimo <= valor <= maximo):
+                raise ValueError(
+                    f"'{variable}' debe estar entre {minimo} y {maximo}. Recibido: {valor}"
+                )
+
+            valores[variable] = valor
+
+        return cls(id_usuario=usuario_id, **valores)
+
+    @classmethod
+    def obtener_historial(cls, usuario_id):
+        """
+        Retorna todas las evaluaciones de un usuario ordenadas por fecha descendente.
+        """
+        return cls.query.filter_by(id_usuario=usuario_id)\
+                        .order_by(cls.fecha_realizacion.desc()).all()
+
+    @classmethod
+    def obtener_ultima(cls, usuario_id):
+        """
+        Retorna la última evaluación de un usuario.
+        """
+        return cls.query.filter_by(id_usuario=usuario_id)\
+                        .order_by(cls.fecha_realizacion.desc()).first()
+
+    @classmethod
+    def obtener_recientes(cls, limite=20):
+        """
+        Retorna las últimas N evaluaciones de todos los usuarios.
+        """
+        from app.models.usuario import Usuario
+        return cls.query\
+            .join(Usuario, cls.id_usuario == Usuario.id_usuario)\
+            .order_by(cls.fecha_realizacion.desc())\
+            .limit(limite).all()

@@ -62,3 +62,22 @@ class Usuario(db.Model):
             "fecha_registro": self.fecha_registro.isoformat() if self.fecha_registro else None,
             "rol": self.rol
         }
+
+    @classmethod
+    def existe_correo(cls, correo, excluir_id=None):
+        """
+        Verifica si un correo ya está registrado.
+        Opcionalmente excluye un ID (para edición).
+        """
+        query = cls.query.filter_by(correo=correo)
+        if excluir_id is not None:
+            query = query.filter(cls.id_usuario != excluir_id)
+        return query.first() is not None
+
+    @classmethod
+    def listar_todos(cls):
+        """
+        Retorna todos los usuarios ordenados por fecha de registro descendente.
+        """
+        usuarios = cls.query.order_by(cls.fecha_registro.desc()).all()
+        return [u.to_dict() for u in usuarios]

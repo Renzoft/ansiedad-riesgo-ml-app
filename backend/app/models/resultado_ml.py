@@ -57,3 +57,21 @@ class ResultadoML(db.Model):
         else:
             data["reporte_ia"] = None
         return data
+
+    @staticmethod
+    def categorizar_riesgo(probabilidad):
+        """
+        Clasifica la probabilidad en nivel de riesgo y genera explicación.
+        Retorna (nivel, explicacion).
+        """
+        if probabilidad < 0.35:
+            nivel = 'BAJO'
+            explicacion = "Tus indicadores muestran un equilibrio saludable. Continúa manteniendo estas rutinas."
+        elif probabilidad <= 0.70:
+            nivel = 'MEDIO'
+            explicacion = "Se detectan ciertos niveles de alerta. Revisa tus horas de sueño y pausas activas."
+        else:
+            nivel = 'ALTO'
+            explicacion = "Alta predisposición a ansiedad. Busca orientación en el departamento de bienestar estudiantil."
+
+        return nivel, explicacion
