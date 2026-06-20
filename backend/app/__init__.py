@@ -99,13 +99,40 @@ def crear_app():
 
     @app.cli.command("init-recomendaciones")
     def init_recomendaciones():
-        """Precarga la tabla 'recomendaciones' con 3 registros base (BAJO, MEDIO, ALTO)"""
+        """Precarga la tabla 'recomendaciones' con 3 registros base (BAJO, MEDIO, ALTO)
+        y crea un usuario admin por defecto si no existe."""
         from app.models.recomendacion import Recomendacion as Rec
+        from app.models.usuario import Usuario
+        from app.utils.roles import ROLE_ADMIN
 
-        # Verificar si ya existen recomendaciones
+        # ==========================================
+        # 1. CREAR USUARIO ADMIN
+        # ==========================================
+        admin_existente = Usuario.query.filter_by(correo="admin@test.com").first()
+        if not admin_existente:
+            admin = Usuario(
+                nombre="Administrador",
+                correo="admin@test.com",
+                facultad="Sistema",
+                ciclo=1,
+                rol=ROLE_ADMIN
+            )
+            admin.establecer_contrasena("admin123")
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Usuario admin creado:")
+            print("   Correo: admin@test.com")
+            print("   Contraseña: admin123")
+            print("   Rol: Administrador")
+        else:
+            print("ℹ️  Usuario admin ya existe (admin@test.com)")
+
+        # ==========================================
+        # 2. INSERTAR RECOMENDACIONES
+        # ==========================================
         existentes = Rec.query.count()
         if existentes > 0:
-            print(f"Ya existen {existentes} recomendaciones en la base de datos. No se insertaron nuevas.")
+            print(f"ℹ️  Ya existen {existentes} recomendaciones. No se insertaron nuevas.")
             return
 
         recomendaciones_base = [
@@ -137,9 +164,9 @@ def crear_app():
         try:
             db.session.add_all(recomendaciones_base)
             db.session.commit()
-            print("3 recomendaciones base insertadas correctamente (BAJO, MEDIO, ALTO).")
+            print("✅ 3 recomendaciones base insertadas correctamente (BAJO, MEDIO, ALTO).")
         except Exception as e:
             db.session.rollback()
-            print(f"Error al insertar recomendaciones: {str(e)}")
+            print(f"❌ Error al insertar recomendaciones: {str(e)}")
 
     return app
