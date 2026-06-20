@@ -431,14 +431,16 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
           )
         else
           ...evaluaciones.asMap().entries.map((entry) {
+            final index = entry.key;
             final eval = entry.value as Map<String, dynamic>;
             final resultado = eval['resultado'] as Map<String, dynamic>?;
             final nivelRiesgo = resultado?['nivel_riesgo'] ?? 'BAJO';
             final probabilidad = (resultado?['probabilidad_ansiedad'] as num?)?.toDouble() ?? 0.0;
+            final explicacion = resultado?['explicacion'] as String?;
+            final recomendaciones = resultado?['recomendaciones'] as List<dynamic>?;
 
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: colors.card,
                 borderRadius: BorderRadius.circular(14),
@@ -450,76 +452,155 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _riesgoColor(nivelRiesgo).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Riesgo $nivelRiesgo',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _riesgoColor(nivelRiesgo),
-                          ),
-                        ),
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _riesgoColor(nivelRiesgo).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '#${eval['id_evaluacion']}',
+                      child: Text(
+                        'Riesgo $nivelRiesgo',
                         style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${(probabilidad * 100).toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: _riesgoColor(nivelRiesgo),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _eliminarEvaluacion(eval),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (eval['fecha_realizacion'] != null) ...[
-                    const SizedBox(height: 8),
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      _formatFecha(eval['fecha_realizacion'] as String),
+                      '#${eval['id_evaluacion']}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: colors.textSecondary,
                       ),
                     ),
+                    const Spacer(),
+                    Text(
+                      '${(probabilidad * 100).toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: _riesgoColor(nivelRiesgo),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _eliminarEvaluacion(eval),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                children: [
+                  if (eval['fecha_realizacion'] != null)
+                    _buildDetailRow(colors, 'Fecha', _formatFecha(eval['fecha_realizacion'] as String)),
+                  if (explicacion != null)
+                    _buildDetailRow(colors, 'Explicación', explicacion),
+                  if (recomendaciones != null && recomendaciones.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Recomendaciones:',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    ...recomendaciones.map((rec) {
+                      final recMap = rec as Map<String, dynamic>;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PhosphorIcon(
+                              PhosphorIcons.lightbulb,
+                              size: 16,
+                              color: const Color(0xFFF59E0B),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    recMap['titulo'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    recMap['descripcion'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ],
                 ],
               ),
             );
           }),
       ],
+    );
+  }
+
+  Widget _buildDetailRow(AppColors colors, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: colors.textSecondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

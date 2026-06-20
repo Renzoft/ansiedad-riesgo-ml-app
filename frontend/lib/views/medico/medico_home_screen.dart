@@ -497,14 +497,6 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
           children: [
             _buildActionCard(
               colors: colors,
-              icon: PhosphorIcons.clipboardText,
-              color: const Color(0xFF6366F1),
-              label: 'Ver\nEvaluaciones',
-              onTap: () => Navigator.pushNamed(context, '/historial'),
-            ),
-            const SizedBox(width: 12),
-            _buildActionCard(
-              colors: colors,
               icon: PhosphorIcons.userList,
               color: const Color(0xFF3B82F6),
               label: 'Pacientes',
@@ -512,11 +504,7 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
                 _setNavIndex(1);
               },
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
+            const SizedBox(width: 12),
             _buildActionCard(
               colors: colors,
               icon: PhosphorIcons.chartLineUp,
@@ -535,7 +523,11 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
                 );
               },
             ),
-            const SizedBox(width: 12),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
             _buildActionCard(
               colors: colors,
               icon: PhosphorIcons.heartbeat,
@@ -552,6 +544,9 @@ class _MedicoHomeScreenState extends State<MedicoHomeScreen> {
                 );
               },
             ),
+            const SizedBox(width: 12),
+            // Espacio vacío para mantener el layout
+            const Expanded(child: SizedBox.shrink()),
           ],
         ),
       ],
