@@ -1,5 +1,5 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Configuración de la API del backend
@@ -52,12 +52,14 @@ class ApiConfig {
     await prefs.remove(_prefsKey);
   }
 
+  /// URL base para producción (Render)
+  static const String _produccionUrl = 'https://ansiedad-riesgo-ml-app.onrender.com';
+
   /// Detecta la URL base según la plataforma
   static String _detectarBaseUrl() {
-    // Si estamos en un navegador web
-    if (kIsWeb) {
-      // En web, el backend puede estar en el mismo host o en localhost
-      return 'http://localhost:$_defaultPort';
+    // Si estamos en producción (web o release mode), usar la URL de Render
+    if (kIsWeb || kReleaseMode) {
+      return _produccionUrl;
     }
 
     try {
