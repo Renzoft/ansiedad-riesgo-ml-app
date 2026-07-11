@@ -1,36 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// Services
-import 'services/api_service.dart';
+// Core
+import 'core/app_colors.dart';
+import 'core/constants.dart';
 
-// Config
-import 'config/api_config.dart';
+// Data
+import 'data/datasources/remote/api_service.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'data/repositories/evaluacion_repository_impl.dart';
+import 'data/repositories/medico_repository_impl.dart';
+import 'data/datasources/remote/auth_remote_datasource.dart';
+import 'data/datasources/remote/evaluacion_remote_datasource.dart';
+import 'data/datasources/remote/medico_remote_datasource.dart';
 
-// ViewModels
-import 'viewmodels/auth_viewmodel.dart';
-import 'viewmodels/evaluacion_viewmodel.dart';
-import 'viewmodels/medico_viewmodel.dart';
-import 'viewmodels/theme_viewmodel.dart';
+// Domain UseCases
+import 'domain/usecases/login_usecase.dart';
+import 'domain/usecases/register_usecase.dart';
+import 'domain/usecases/logout_usecase.dart';
+import 'domain/usecases/evaluar_riesgo_usecase.dart';
+import 'domain/usecases/obtener_historial_usecase.dart';
+import 'domain/usecases/obtener_estadisticas_medico_usecase.dart';
+import 'domain/usecases/obtener_pacientes_usecase.dart';
+import 'domain/usecases/obtener_evaluaciones_recientes_usecase.dart';
 
-// Theme
-import 'constants/app_colors.dart';
-
-// Screens
-import 'views/onboarding/onboarding_screen.dart';
-import 'views/auth/login_screen.dart';
-import 'views/home/home_screen.dart';
-import 'views/admin/admin_home_screen.dart';
-import 'views/medico/medico_home_screen.dart';
-import 'views/evaluacion/evaluacion_screen.dart';
-import 'views/evaluacion/resultado_screen.dart';
-import 'views/evaluacion/historial_screen.dart';
-import 'views/perfil/perfil_screen.dart';
+// Presentation
+import 'presentation/viewmodels/auth_viewmodel.dart';
+import 'presentation/viewmodels/evaluacion_viewmodel.dart';
+import 'presentation/viewmodels/medico_viewmodel.dart';
+import 'presentation/viewmodels/theme_viewmodel.dart';
+import 'presentation/pages/onboarding/onboarding_screen.dart';
+import 'presentation/pages/auth/login_screen.dart';
+import 'presentation/pages/home/home_screen.dart';
+import 'presentation/pages/admin/admin_home_screen.dart';
+import 'presentation/pages/medico/medico_home_screen.dart';
+import 'presentation/pages/evaluacion/evaluacion_screen.dart';
+import 'presentation/pages/evaluacion/resultado_screen.dart';
+import 'presentation/pages/evaluacion/historial_screen.dart';
+import 'presentation/pages/perfil/perfil_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Inicializar configuración de API (cargar URL guardada)
-  await ApiConfig.init();
+  await AppConstants.init();
   runApp(const AnsiedadApp());
 }
 
@@ -39,14 +51,58 @@ class AnsiedadApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ==========================================
+    // INYECCIÓN DE DEPENDENCIAS (Clean Architecture)
+    // ==========================================
+
+    // Data Layer
     final apiService = ApiService();
+    final authRemoteDataSource = AuthRemoteDataSource(apiService);
+    final evaluacionRemoteDataSource = EvaluacionRemoteDataSource(apiService);
+    final medicoRemoteDataSource = MedicoRemoteDataSource(apiService);
+
+    // Repository Layer
+    final authRepository = AuthRepositoryImpl(authRemoteDataSource);
+    final evaluacionRepository = EvaluacionRepositoryImpl(
+      evaluacionRemoteDataSource,
+    );
+    final medicoRepository = MedicoRepositoryImpl(medicoRemoteDataSource);
+
+    // UseCase Layer
+    final loginUseCase = LoginUseCase(authRepository);
+    final registerUseCase = RegisterUseCase(authRepository);
+    final logoutUseCase = LogoutUseCase(authRepository);
+    final evaluarRiesgoUseCase = EvaluarRiesgoUseCase(evaluacionRepository);
+    final obtenerHistorialUseCase = ObtenerHistorialUseCase(
+      evaluacionRepository,
+    );
+    final obtenerEstadisticasMedicoUseCase = ObtenerEstadisticasMedicoUseCase(
+      medicoRepository,
+    );
+    final obtenerPacientesUseCase = ObtenerPacientesUseCase(medicoRepository);
+    final obtenerEvaluacionesRecientesUseCase =
+        ObtenerEvaluacionesRecientesUseCase(medicoRepository);
 
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
-        ChangeNotifierProvider(create: (_) => AuthViewModel(apiService)),
-        ChangeNotifierProvider(create: (_) => EvaluacionViewModel(apiService)),
-        ChangeNotifierProvider(create: (_) => MedicoViewModel(apiService)),
+        ChangeNotifierProvider(
+          create: (_) =>
+              AuthViewModel(loginUseCase, registerUseCase, logoutUseCase),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => EvaluacionViewModel(
+            evaluarRiesgoUseCase,
+            obtenerHistorialUseCase,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MedicoViewModel(
+            obtenerEstadisticasMedicoUseCase,
+            obtenerPacientesUseCase,
+            obtenerEvaluacionesRecientesUseCase,
+          ),
+        ),
       ],
       child: Consumer<ThemeNotifier>(
         builder: (context, themeNotifier, _) {
